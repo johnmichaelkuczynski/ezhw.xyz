@@ -2636,6 +2636,8 @@ Respond with the refined solution only:`;
       let actualSessionId = sessionId;
       let userId = req.session.userId;
       
+      console.log(`[TOKEN DEBUG] User: ${userId}, Input: ${inputTokens}, Estimated Output: ${estimatedOutputTokens}, Total: ${totalTokens}`);
+      
       // Check token limits and process accordingly
       if (userId) {
         // Registered user - check token balance
@@ -2644,8 +2646,10 @@ Respond with the refined solution only:`;
           return res.status(404).json({ error: "User not found" });
         }
         
-        // SPECIAL CASE: jmkuczynski and randyjohnson have unlimited access
-        if (user.username !== 'jmkuczynski' && user.username !== 'randyjohnson' && (user.tokenBalance || 0) < totalTokens) {
+        console.log(`[TOKEN DEBUG] User ${user.username} has ${user.tokenBalance} tokens, needs ${totalTokens}`);
+        
+        // SPECIAL CASE: jmkuczynski and randyjohnson have unlimited access  
+        if (user.username !== 'jmkuczynski' && user.username !== 'randyjohnson' && (user.tokenBalance || 0) < 50) {
           return res.status(402).json({ 
             error: "🔒 You've used all your credits. [Buy More Credits]",
             needsUpgrade: true 
@@ -2677,10 +2681,15 @@ Respond with the refined solution only:`;
         const actualOutputTokens = countTokens(llmResult.response);
         const actualTotalTokens = inputTokens + actualOutputTokens;
         
+        console.log(`[TOKEN DEDUCTION] User ${user.username}: actual input=${inputTokens}, actual output=${actualOutputTokens}, actual total=${actualTotalTokens}`);
+        
         // SPECIAL CASE: Don't deduct tokens from jmkuczynski or randyjohnson
         if (user.username !== 'jmkuczynski' && user.username !== 'randyjohnson') {
-          // Deduct tokens
-          await storage.updateUserTokenBalance(userId, (user.tokenBalance || 0) - actualTotalTokens);
+          console.log(`[TOKEN DEDUCTION] Deducting ${actualTotalTokens} tokens from user ${user.username} (balance: ${user.tokenBalance})`);
+          // Deduct tokens but prevent negative balance
+          const newBalance = Math.max(0, (user.tokenBalance || 0) - actualTotalTokens);
+          await storage.updateUserTokenBalance(userId, newBalance);
+          console.log(`[TOKEN DEDUCTION] New balance: ${newBalance} (prevented negative: ${(user.tokenBalance || 0) - actualTotalTokens})`);
           
           // Log token usage
           await storage.createTokenUsage({
