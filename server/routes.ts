@@ -2620,7 +2620,7 @@ Respond with the refined solution only:`;
   // Text processing endpoint with token management
   app.post("/api/process-text", async (req, res) => {
     try {
-      const { inputText, llmProvider, sessionId } = processAssignmentSchema.parse(req.body);
+      const { inputText, llmProvider, sessionId, referenceDocumentIds = [] } = processAssignmentSchema.parse(req.body);
 
       if (!inputText) {
         return res.status(400).json({ error: "Input text is required" });
@@ -2628,13 +2628,36 @@ Respond with the refined solution only:`;
 
       const startTime = Date.now();
       
-      // Count tokens
-      const inputTokens = countTokens(inputText);
-      const estimatedOutputTokens = estimateOutputTokens(inputText);
-      const totalTokens = inputTokens + estimatedOutputTokens;
+      // WHOLE-DOC MODE: When reference documents are provided, combine them with user input
+      let combinedText = inputText;
+      const userId = req.session.userId;
+      let actualSessionId = req.headers['x-session-id'] as string || sessionId;
       
-      let actualSessionId = sessionId;
-      let userId = req.session.userId;
+      if (referenceDocumentIds.length > 0) {
+        console.log(`[WHOLE-DOC MODE] Processing with ${referenceDocumentIds.length} reference documents`);
+        
+        // Fetch reference documents content
+        const referenceTexts: string[] = [];
+        for (const docId of referenceDocumentIds) {
+          const document = await storage.getReferenceDocument(docId, userId, actualSessionId);
+          if (document) {
+            referenceTexts.push(`=== REFERENCE DOCUMENT: ${document.fileName} ===\n${document.extractedText}\n\n`);
+          } else {
+            console.warn(`[WHOLE-DOC MODE] Reference document ${docId} not found or access denied`);
+          }
+        }
+        
+        if (referenceTexts.length > 0) {
+          // Combine reference documents with user prompt - process as complete wholes
+          combinedText = `${referenceTexts.join('')}=== USER REQUEST ===\n${inputText}\n\nPlease analyze the above reference documents as complete wholes and respond to the user request based on the full context provided.`;
+          console.log(`[WHOLE-DOC MODE] Combined text length: ${combinedText.length} chars`);
+        }
+      }
+      
+      // Count tokens based on combined text (inputText + reference documents)
+      const inputTokens = countTokens(combinedText);
+      const estimatedOutputTokens = estimateOutputTokens(combinedText);
+      const totalTokens = inputTokens + estimatedOutputTokens;
       
       console.log(`[TOKEN DEBUG] User: ${userId}, Input: ${inputTokens}, Estimated Output: ${estimatedOutputTokens}, Total: ${totalTokens}`);
       
@@ -2660,19 +2683,19 @@ Respond with the refined solution only:`;
         let llmResult: {response: string, graphData?: GraphRequest[]};
         switch (llmProvider) {
           case 'anthropic':
-            llmResult = await processWithAnthropic(inputText);
+            llmResult = await processWithAnthropic(combinedText);
             break;
           case 'openai':
-            llmResult = await processWithOpenAI(inputText);
+            llmResult = await processWithOpenAI(combinedText);
             break;
           case 'azure':
-            llmResult = await processWithAzureOpenAI(inputText);
+            llmResult = await processWithAzureOpenAI(combinedText);
             break;
           case 'perplexity':
-            llmResult = await processWithPerplexity(inputText);
+            llmResult = await processWithPerplexity(combinedText);
             break;
           case 'deepseek':
-            llmResult = await processWithDeepSeekFixed(inputText);
+            llmResult = await processWithDeepSeekFixed(combinedText);
             break;
           default:
             throw new Error(`Unsupported LLM provider: ${llmProvider}`);
@@ -2735,6 +2758,7 @@ Respond with the refined solution only:`;
           extractedText: null,
           llmProvider,
           llmResponse: llmResult.response,
+          referenceDocumentIds, // Include reference documents used
           graphData: graphDataJsons,
           graphImages: graphImages,
           processingTime,
@@ -2763,19 +2787,19 @@ Respond with the refined solution only:`;
         let llmResult: {response: string, graphData?: GraphRequest[]};
         switch (llmProvider) {
           case 'anthropic':
-            llmResult = await processWithAnthropic(inputText);
+            llmResult = await processWithAnthropic(combinedText);
             break;
           case 'openai':
-            llmResult = await processWithOpenAI(inputText);
+            llmResult = await processWithOpenAI(combinedText);
             break;
           case 'azure':
-            llmResult = await processWithAzureOpenAI(inputText);
+            llmResult = await processWithAzureOpenAI(combinedText);
             break;
           case 'perplexity':
-            llmResult = await processWithPerplexity(inputText);
+            llmResult = await processWithPerplexity(combinedText);
             break;
           case 'deepseek':
-            llmResult = await processWithDeepSeekFixed(inputText);
+            llmResult = await processWithDeepSeekFixed(combinedText);
             break;
           default:
             throw new Error(`Unsupported LLM provider: ${llmProvider}`);
@@ -2805,6 +2829,7 @@ Respond with the refined solution only:`;
           extractedText: null,
           llmProvider,
           llmResponse: previewResponse, // Store preview, not full answer
+          referenceDocumentIds, // Include reference documents used
           graphData: graphDataJsons,
           graphImages: graphImages,
           processingTime,
