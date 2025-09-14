@@ -32,6 +32,18 @@ export const dailyUsage = pgTable("daily_usage", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Reference documents table with proper user isolation
+export const referenceDocuments = pgTable("reference_documents", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
+  sessionId: text("session_id"), // for anonymous users
+  fileName: text("file_name").notNull(),
+  mimeType: text("mime_type").notNull(),
+  fileSize: integer("file_size"),
+  extractedText: text("extracted_text").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Assignments table with proper user isolation (CASCADE DELETE for security)
 export const assignments = pgTable("assignments", {
   id: serial("id").primaryKey(),
@@ -45,10 +57,16 @@ export const assignments = pgTable("assignments", {
   llmResponse: text("llm_response"),
   graphData: text("graph_data").array(), // JSON strings containing graph configuration and data
   graphImages: text("graph_images").array(), // base64 encoded graph images
+  referenceDocumentIds: integer("reference_document_ids").array().default([]), // references to reference_documents
   processingTime: integer("processing_time"), // in milliseconds
   inputTokens: integer("input_tokens"),
   outputTokens: integer("output_tokens"),
   createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertReferenceDocumentSchema = createInsertSchema(referenceDocuments).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertAssignmentSchema = createInsertSchema(assignments).omit({
@@ -56,6 +74,8 @@ export const insertAssignmentSchema = createInsertSchema(assignments).omit({
   createdAt: true,
 });
 
+export type InsertReferenceDocument = z.infer<typeof insertReferenceDocumentSchema>;
+export type ReferenceDocument = typeof referenceDocuments.$inferSelect;
 export type InsertAssignment = z.infer<typeof insertAssignmentSchema>;
 export type Assignment = typeof assignments.$inferSelect;
 
@@ -67,6 +87,7 @@ export const processAssignmentSchema = z.object({
   llmProvider: z.enum(['anthropic', 'openai', 'azure', 'perplexity', 'deepseek']),
   fileData: z.string().optional(), // base64 encoded file data
   sessionId: z.string().optional(), // for anonymous users
+  referenceDocumentIds: z.array(z.number()).default([]), // for whole-document processing
 });
 
 export type ProcessAssignmentRequest = z.infer<typeof processAssignmentSchema>;

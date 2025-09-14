@@ -207,6 +207,36 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Startup migration: Create reference_documents table and add reference_document_ids column idempotently
+  try {
+    const { pool } = await import('./db');
+    
+    // Create reference_documents table (safe to rerun)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS reference_documents (
+        id serial PRIMARY KEY,
+        user_id integer REFERENCES users(id) ON DELETE CASCADE,
+        session_id text,
+        file_name text NOT NULL,
+        mime_type text NOT NULL,
+        file_size integer,
+        extracted_text text NOT NULL,
+        created_at timestamp DEFAULT now()
+      )
+    `);
+    
+    // Add reference_document_ids column to assignments (safe to rerun)
+    await pool.query(`
+      ALTER TABLE assignments
+      ADD COLUMN IF NOT EXISTS reference_document_ids integer[] DEFAULT '{}'::integer[]
+    `);
+    
+    console.log('[MIGRATION] Reference documents schema updated successfully');
+  } catch (error) {
+    console.error('[MIGRATION] Error updating schema:', error);
+    // Continue startup even if migration fails - the app should still work
+  }
+  
   const server = await registerRoutes(app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
