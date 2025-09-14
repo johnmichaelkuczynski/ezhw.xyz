@@ -2648,8 +2648,8 @@ Respond with the refined solution only:`;
         
         console.log(`[TOKEN DEBUG] User ${user.username} has ${user.tokenBalance} tokens, needs ${totalTokens}`);
         
-        // SPECIAL CASE: jmkuczynski and randyjohnson have unlimited access  
-        if (user.username !== 'jmkuczynski' && user.username !== 'randyjohnson' && (user.tokenBalance || 0) < 50) {
+        // SPECIAL CASE: jmkuczynski and randyjohnson have unlimited access
+        if (user.username !== 'jmkuczynski' && user.username !== 'randyjohnson' && (user.tokenBalance || 0) < totalTokens) {
           return res.status(402).json({ 
             error: "🔒 You've used all your credits. [Buy More Credits]",
             needsUpgrade: true 
