@@ -2636,6 +2636,8 @@ Respond with the refined solution only:`;
       let actualSessionId = sessionId;
       let userId = req.session.userId;
       
+      console.log(`[TOKEN DEBUG] User: ${userId}, Input: ${inputTokens}, Estimated Output: ${estimatedOutputTokens}, Total: ${totalTokens}`);
+      
       // Check token limits and process accordingly
       if (userId) {
         // Registered user - check token balance
@@ -2643,6 +2645,8 @@ Respond with the refined solution only:`;
         if (!user) {
           return res.status(404).json({ error: "User not found" });
         }
+        
+        console.log(`[TOKEN DEBUG] User ${user.username} has ${user.tokenBalance} tokens, needs ${totalTokens}`);
         
         // SPECIAL CASE: jmkuczynski and randyjohnson have unlimited access
         if (user.username !== 'jmkuczynski' && user.username !== 'randyjohnson' && (user.tokenBalance || 0) < totalTokens) {
