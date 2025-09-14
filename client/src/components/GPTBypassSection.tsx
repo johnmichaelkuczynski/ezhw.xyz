@@ -706,7 +706,7 @@ export default function GPTBypassSection({ onSendToHomework, receivedHomeworkTex
   };
 
   const downloadAsWord = () => {
-    if (!outputText.trim()) {
+    if (!outputText || !outputText.trim()) {
       toast({
         title: "Nothing to download",
         description: "Box C is empty",
@@ -734,7 +734,7 @@ export default function GPTBypassSection({ onSendToHomework, receivedHomeworkTex
   };
 
   const downloadAsPDF = async () => {
-    if (!outputText.trim()) {
+    if (!outputText || !outputText.trim()) {
       toast({
         title: "Nothing to download",
         description: "Box C is empty",
@@ -783,7 +783,7 @@ export default function GPTBypassSection({ onSendToHomework, receivedHomeworkTex
 
   // Send output to homework assignment details
   const sendToHomework = () => {
-    if (!outputText.trim()) {
+    if (!outputText || !outputText.trim()) {
       toast({
         title: "Nothing to send",
         description: "Box C is empty",
@@ -1043,7 +1043,7 @@ export default function GPTBypassSection({ onSendToHomework, receivedHomeworkTex
                     variant="outline"
                     size="sm"
                     onClick={async () => {
-                      if (!outputText.trim()) {
+                      if (!outputText || !outputText.trim()) {
                         toast({
                           title: "Nothing to copy",
                           description: "Box C is empty",
