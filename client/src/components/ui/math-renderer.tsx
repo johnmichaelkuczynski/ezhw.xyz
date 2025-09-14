@@ -9,7 +9,7 @@ export function MathRenderer({ content, className = "" }: MathRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (containerRef.current && content) {
+    if (containerRef.current && content && typeof content === 'string') {
       // Enhanced formatting processing
       let processedContent = content
         // Handle headings
