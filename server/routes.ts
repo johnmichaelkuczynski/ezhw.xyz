@@ -2722,13 +2722,16 @@ Respond with the refined solution only:`;
           }
         }
 
+        // Auto-generate filename from input text
+        const autoFileName = inputText.split(' ').slice(0, 6).join(' ').substring(0, 50) + '...';
+        
         // Store assignment
         const assignment = await storage.createAssignment({
           userId,
           sessionId: null,
           inputText,
           inputType: 'text',
-          fileName: null,
+          fileName: autoFileName,
           extractedText: null,
           llmProvider,
           llmResponse: llmResult.response,
@@ -2789,13 +2792,16 @@ Respond with the refined solution only:`;
         const graphImages: string[] | undefined = undefined;
         const graphDataJsons: string[] | undefined = undefined;
 
+        // Auto-generate filename from input text  
+        const autoFileName = inputText.split(' ').slice(0, 6).join(' ').substring(0, 50) + '...';
+        
         // Store assignment with preview only
         const assignment = await storage.createAssignment({
           userId: null,
           sessionId: actualSessionId,
           inputText,
           inputType: 'text',
-          fileName: null,
+          fileName: autoFileName,
           extractedText: null,
           llmProvider,
           llmResponse: previewResponse, // Store preview, not full answer
