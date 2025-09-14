@@ -44,7 +44,7 @@ export function AuthDialog({ open, onClose, onSuccess }: AuthDialogProps) {
       // Force refetch with delay to ensure session cookie is set
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["/api/me"] });
-        queryClient.refetchQueries({ queryKey: ["/api/me"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/assignments"] });
       }, 200);
       onSuccess?.(user.user);
       onClose();
@@ -72,7 +72,7 @@ export function AuthDialog({ open, onClose, onSuccess }: AuthDialogProps) {
       // Force refetch with delay to ensure session cookie is set
       setTimeout(() => {
         queryClient.invalidateQueries({ queryKey: ["/api/me"] });
-        queryClient.refetchQueries({ queryKey: ["/api/me"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/assignments"] });
       }, 200);
       onSuccess?.(user.user);
       onClose();
