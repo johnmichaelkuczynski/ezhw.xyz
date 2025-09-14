@@ -1,4 +1,4 @@
-import { assignments, users, tokenUsage, dailyUsage, documents, rewriteJobs, stripePayments, stripeEvents, type Assignment, type InsertAssignment, type User, type InsertUser, type TokenUsage, type InsertTokenUsage, type DailyUsage, type InsertDailyUsage, type Document, type InsertDocument, type RewriteJob, type InsertRewriteJob, type StripePayment, type InsertStripePayment, type StripeEvent, type InsertStripeEvent } from "@shared/schema";
+import { assignments, users, tokenUsage, dailyUsage, documents, rewriteJobs, stripePayments, stripeEvents, referenceDocuments, type Assignment, type InsertAssignment, type User, type InsertUser, type TokenUsage, type InsertTokenUsage, type DailyUsage, type InsertDailyUsage, type Document, type InsertDocument, type RewriteJob, type InsertRewriteJob, type StripePayment, type InsertStripePayment, type StripeEvent, type InsertStripeEvent, type ReferenceDocument, type InsertReferenceDocument } from "@shared/schema";
 import { db } from "./db";
 import { eq, isNull, and, sum } from "drizzle-orm";
 
@@ -8,6 +8,7 @@ export interface IStorage {
   getAssignment(id: number, userId?: number, sessionId?: string): Promise<Assignment | undefined>;
   getAllAssignments(userId?: number, sessionId?: string): Promise<Assignment[]>;
   deleteAssignment(id: number, userId?: number, sessionId?: string): Promise<void>;
+  deleteAllAssignments(userId?: number, sessionId?: string): Promise<void>;
   cleanupEmptyAssignments(): Promise<void>;
   
   // User management methods
@@ -44,6 +45,12 @@ export interface IStorage {
   // Stripe event idempotency methods
   createStripeEvent(event: InsertStripeEvent): Promise<StripeEvent>;
   isEventProcessed(eventId: string): Promise<boolean>;
+
+  // Reference document methods
+  createReferenceDocument(document: InsertReferenceDocument): Promise<ReferenceDocument>;
+  getReferenceDocument(id: number, userId?: number, sessionId?: string): Promise<ReferenceDocument | undefined>;
+  getAllReferenceDocuments(userId?: number, sessionId?: string): Promise<ReferenceDocument[]>;
+  deleteReferenceDocument(id: number, userId?: number, sessionId?: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -412,6 +419,104 @@ export class DatabaseStorage implements IStorage {
       .from(stripeEvents)
       .where(eq(stripeEvents.eventId, eventId));
     return !!event;
+  }
+
+  // Bulk delete assignments for user cleanup
+  async deleteAllAssignments(userId?: number, sessionId?: string): Promise<void> {
+    const conditions = [];
+    
+    // SECURITY: Always enforce user isolation for authenticated users
+    if (userId) {
+      conditions.push(eq(assignments.userId, userId));
+    } else {
+      // For anonymous users, enforce sessionId isolation to prevent cross-session access
+      conditions.push(isNull(assignments.userId));
+      if (sessionId) {
+        conditions.push(eq(assignments.sessionId, sessionId));
+      } else {
+        // No sessionId for anonymous user - don't delete anything for security
+        return;
+      }
+    }
+
+    await db.delete(assignments).where(and(...conditions));
+  }
+
+  // Reference document CRUD operations with user isolation
+  async createReferenceDocument(insertDocument: InsertReferenceDocument): Promise<ReferenceDocument> {
+    const [document] = await db
+      .insert(referenceDocuments)
+      .values(insertDocument)
+      .returning();
+    return document;
+  }
+
+  async getReferenceDocument(id: number, userId?: number, sessionId?: string): Promise<ReferenceDocument | undefined> {
+    const conditions = [eq(referenceDocuments.id, id)];
+    
+    // SECURITY: Always enforce user isolation for authenticated users
+    if (userId) {
+      conditions.push(eq(referenceDocuments.userId, userId));
+    } else {
+      // For anonymous users, enforce sessionId isolation to prevent cross-session access
+      conditions.push(isNull(referenceDocuments.userId));
+      if (sessionId) {
+        conditions.push(eq(referenceDocuments.sessionId, sessionId));
+      } else {
+        // No sessionId for anonymous user - return undefined for security
+        return undefined;
+      }
+    }
+    
+    const [document] = await db
+      .select()
+      .from(referenceDocuments)
+      .where(and(...conditions));
+    return document;
+  }
+
+  async getAllReferenceDocuments(userId?: number, sessionId?: string): Promise<ReferenceDocument[]> {
+    const conditions = [];
+    
+    // SECURITY: Always enforce user isolation for authenticated users
+    if (userId) {
+      conditions.push(eq(referenceDocuments.userId, userId));
+    } else {
+      // For anonymous users, enforce sessionId isolation to prevent cross-session access
+      conditions.push(isNull(referenceDocuments.userId));
+      if (sessionId) {
+        conditions.push(eq(referenceDocuments.sessionId, sessionId));
+      } else {
+        // No sessionId for anonymous user - return empty array for security
+        return [];
+      }
+    }
+    
+    return await db
+      .select()
+      .from(referenceDocuments)
+      .where(and(...conditions))
+      .orderBy(referenceDocuments.createdAt);
+  }
+
+  async deleteReferenceDocument(id: number, userId?: number, sessionId?: string): Promise<void> {
+    const conditions = [eq(referenceDocuments.id, id)];
+    
+    // SECURITY: Always enforce user isolation for authenticated users
+    if (userId) {
+      conditions.push(eq(referenceDocuments.userId, userId));
+    } else {
+      // For anonymous users, enforce sessionId isolation to prevent cross-session access
+      conditions.push(isNull(referenceDocuments.userId));
+      if (sessionId) {
+        conditions.push(eq(referenceDocuments.sessionId, sessionId));
+      } else {
+        // No sessionId for anonymous user - don't delete anything for security
+        return;
+      }
+    }
+    
+    await db.delete(referenceDocuments).where(and(...conditions));
   }
 }
 
