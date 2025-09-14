@@ -2853,6 +2853,7 @@ Respond with the refined solution only:`;
         processingTime: assignment.processingTime || 0,
         createdAt: assignment.createdAt?.toISOString() || new Date().toISOString(),
         fileName: assignment.fileName,
+        inputText: assignment.inputText,
       }));
       
       res.json(assignmentList);
