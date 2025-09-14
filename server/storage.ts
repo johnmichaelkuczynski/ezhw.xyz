@@ -5,9 +5,9 @@ import { eq, isNull, and, sum } from "drizzle-orm";
 export interface IStorage {
   // Assignment methods with user isolation
   createAssignment(assignment: InsertAssignment): Promise<Assignment>;
-  getAssignment(id: number, userId?: number): Promise<Assignment | undefined>;
-  getAllAssignments(userId?: number): Promise<Assignment[]>;
-  deleteAssignment(id: number, userId?: number): Promise<void>;
+  getAssignment(id: number, userId?: number, sessionId?: string): Promise<Assignment | undefined>;
+  getAllAssignments(userId?: number, sessionId?: string): Promise<Assignment[]>;
+  deleteAssignment(id: number, userId?: number, sessionId?: string): Promise<void>;
   cleanupEmptyAssignments(): Promise<void>;
   
   // User management methods
@@ -55,38 +55,63 @@ export class DatabaseStorage implements IStorage {
     return assignment;
   }
 
-  async getAssignment(id: number, userId?: number): Promise<Assignment | undefined> {
+  async getAssignment(id: number, userId?: number, sessionId?: string): Promise<Assignment | undefined> {
     const conditions = [eq(assignments.id, id)];
     
     // SECURITY: Always enforce user isolation for authenticated users
     if (userId) {
       conditions.push(eq(assignments.userId, userId));
+    } else {
+      // For anonymous users, enforce sessionId isolation to prevent cross-session access
+      conditions.push(isNull(assignments.userId));
+      if (sessionId) {
+        conditions.push(eq(assignments.sessionId, sessionId));
+      } else {
+        // No sessionId for anonymous user - return undefined for security
+        return undefined;
+      }
     }
     
     const [assignment] = await db.select().from(assignments).where(and(...conditions));
     return assignment || undefined;
   }
 
-  async getAllAssignments(userId?: number): Promise<Assignment[]> {
+  async getAllAssignments(userId?: number, sessionId?: string): Promise<Assignment[]> {
     const conditions = [];
     
     // SECURITY: Always enforce user isolation for authenticated users
     if (userId) {
       conditions.push(eq(assignments.userId, userId));
     } else {
-      // For anonymous users, only show assignments without a userId
+      // For anonymous users, only show assignments without a userId AND matching sessionId
       conditions.push(isNull(assignments.userId));
+      // CRITICAL SECURITY: Must filter by sessionId to prevent cross-session data leakage
+      if (sessionId) {
+        conditions.push(eq(assignments.sessionId, sessionId));
+      } else {
+        // If no sessionId provided for anonymous user, return empty array for security
+        return [];
+      }
     }
     
     return await db.select().from(assignments).where(and(...conditions)).orderBy(assignments.createdAt);
   }
 
-  async deleteAssignment(id: number, userId?: number): Promise<void> {
+  async deleteAssignment(id: number, userId?: number, sessionId?: string): Promise<void> {
     const conditions = [eq(assignments.id, id)];
     
     // SECURITY: Always enforce user isolation for authenticated users
     if (userId) {
       conditions.push(eq(assignments.userId, userId));
+    } else {
+      // For anonymous users, enforce sessionId isolation to prevent cross-session deletion
+      conditions.push(isNull(assignments.userId));
+      if (sessionId) {
+        conditions.push(eq(assignments.sessionId, sessionId));
+      } else {
+        // No sessionId for anonymous user - don't delete anything for security
+        return;
+      }
     }
     
     await db.delete(assignments).where(and(...conditions));
@@ -461,19 +486,58 @@ export class MemStorage implements IStorage {
     return assignment;
   }
 
-  async getAssignment(id: number): Promise<Assignment | undefined> {
-    return this.assignments.get(id);
+  async getAssignment(id: number, userId?: number, sessionId?: string): Promise<Assignment | undefined> {
+    const assignment = this.assignments.get(id);
+    if (!assignment) return undefined;
+    
+    // SECURITY: Enforce user/session isolation
+    if (userId) {
+      return assignment.userId === userId ? assignment : undefined;
+    } else {
+      // For anonymous users, check sessionId isolation
+      return assignment.userId === null && assignment.sessionId === sessionId ? assignment : undefined;
+    }
   }
 
-  async getAllAssignments(): Promise<Assignment[]> {
-    return Array.from(this.assignments.values()).sort((a, b) => 
+  async getAllAssignments(userId?: number, sessionId?: string): Promise<Assignment[]> {
+    const allAssignments = Array.from(this.assignments.values());
+    
+    // SECURITY: Filter by userId for authenticated users, sessionId for anonymous
+    const filteredAssignments = allAssignments.filter(assignment => {
+      if (userId) {
+        return assignment.userId === userId;
+      } else {
+        // For anonymous users, only return assignments without userId AND matching sessionId
+        return assignment.userId === null && assignment.sessionId === sessionId;
+      }
+    });
+    
+    // If no sessionId provided for anonymous user, return empty array for security
+    if (!userId && !sessionId) {
+      return [];
+    }
+    
+    return filteredAssignments.sort((a, b) => 
       (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0)
     );
   }
 
-  async deleteAssignment(id: number): Promise<void> {
-    this.assignments.delete(id);
-    this.saveToFile();
+  async deleteAssignment(id: number, userId?: number, sessionId?: string): Promise<void> {
+    const assignment = this.assignments.get(id);
+    if (!assignment) return;
+    
+    // SECURITY: Only delete if user/session owns the assignment
+    let canDelete = false;
+    if (userId) {
+      canDelete = assignment.userId === userId;
+    } else {
+      canDelete = assignment.userId === null && assignment.sessionId === sessionId;
+    }
+    
+    if (canDelete) {
+      this.assignments.delete(id);
+      this.saveToFile();
+    }
   }
 
   async cleanupEmptyAssignments(): Promise<void> {

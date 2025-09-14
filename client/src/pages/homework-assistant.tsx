@@ -19,6 +19,7 @@ import { PaymentDialog } from "@/components/ui/payment-dialog";
 import { AuthDialog } from "@/components/ui/auth-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { useSession } from "@/hooks/use-session";
+import { getAllAssignments } from "@/lib/api";
 import GPTBypassSection from "@/components/GPTBypassSection";
 
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -138,7 +139,8 @@ export default function HomeworkAssistant() {
   const { toast } = useToast();
 
   const assignmentsQuery = useQuery<any[]>({
-    queryKey: ['/api/assignments'],
+    queryKey: ['/api/assignments', isAuthenticated ? undefined : sessionId],
+    queryFn: () => getAllAssignments(isAuthenticated ? undefined : sessionId),
     enabled: true
   });
   

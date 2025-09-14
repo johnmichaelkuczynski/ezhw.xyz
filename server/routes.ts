@@ -2827,9 +2827,10 @@ Respond with the refined solution only:`;
     try {
       // SECURITY: Get user ID from session for isolation
       const userId = req.session.userId;
+      const sessionId = req.query.sessionId as string;
       
       // Get assignments scoped to user (or anonymous if no user)
-      const assignments = await storage.getAllAssignments(userId);
+      const assignments = await storage.getAllAssignments(userId, sessionId);
       const assignmentList: AssignmentListItem[] = assignments.map(assignment => ({
         id: assignment.id,
         extractedText: assignment.extractedText,

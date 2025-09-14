@@ -36,8 +36,9 @@ export async function processText(
   return response.json();
 }
 
-export async function getAllAssignments() {
-  const response = await apiRequest('GET', '/api/assignments');
+export async function getAllAssignments(sessionId?: string) {
+  const url = sessionId ? `/api/assignments?sessionId=${encodeURIComponent(sessionId)}` : '/api/assignments';
+  const response = await apiRequest('GET', url);
   return response.json();
 }
 
