@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useSession } from "@/hooks/use-session";
 import { Loader2, Mail, Lock, User, CreditCard, Eye, EyeOff } from "lucide-react";
 
 interface AuthDialogProps {
@@ -24,13 +25,14 @@ export function AuthDialog({ open, onClose, onSuccess }: AuthDialogProps) {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const sessionId = useSession();
 
   const loginMutation = useMutation({
     mutationFn: async (data: { username: string; password?: string }) => {
       // Don't send password field if it's undefined (for jmkuczynski)
       const requestData = data.password === undefined 
-        ? { username: data.username }
-        : { username: data.username, password: data.password };
+        ? { username: data.username, sessionId }
+        : { username: data.username, password: data.password, sessionId };
       const response = await apiRequest("POST", "/api/login", requestData);
       return response.json();
     },
@@ -59,7 +61,7 @@ export function AuthDialog({ open, onClose, onSuccess }: AuthDialogProps) {
 
   const registerMutation = useMutation({
     mutationFn: async (data: { username: string; password: string }) => {
-      const response = await apiRequest("POST", "/api/register", data);
+      const response = await apiRequest("POST", "/api/register", { ...data, sessionId });
       return response.json();
     },
     onSuccess: (user) => {

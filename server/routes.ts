@@ -1940,6 +1940,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/register', async (req, res) => {
     try {
       const userData = registerSchema.parse(req.body);
+      const { sessionId } = userData;
       
       // SPECIAL CASE: jmkuczynski gets unlimited access
       if (userData.username === 'jmkuczynski') {
@@ -1954,6 +1955,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         
         // Store user in session
         req.session.userId = user.id;
+        
+        // Migrate anonymous assignments if sessionId provided
+        if (sessionId) {
+          await storage.migrateAnonymousAssignments(sessionId, user.id);
+        }
         
         res.json({
           success: true,
@@ -1970,6 +1976,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Store user in session
       req.session.userId = user.id;
+      
+      // Migrate anonymous assignments if sessionId provided
+      if (sessionId) {
+        await storage.migrateAnonymousAssignments(sessionId, user.id);
+      }
       
       res.json({
         success: true,
@@ -1994,10 +2005,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const username = req.body.username?.toLowerCase()?.trim();
       
       if (username === 'jmkuczynski' || username === 'randyjohnson') {
-        loginData = { username: req.body.username, password: undefined };
+        loginData = { username: req.body.username, password: undefined, sessionId: req.body.sessionId };
       } else {
         loginData = loginSchema.parse(req.body);
       }
+      
+      const { sessionId } = loginData;
       
       // SPECIAL CASE: jmkuczynski and randyjohnson get unlimited access with NO PASSWORD required
       const loginUsername = loginData.username?.toLowerCase()?.trim();
@@ -2022,6 +2035,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Store user in session
         req.session.userId = user.id;
         
+        // Migrate anonymous assignments if sessionId provided
+        if (sessionId) {
+          await storage.migrateAnonymousAssignments(sessionId, user.id);
+        }
+        
         res.json({
           success: true,
           user: {
@@ -2042,6 +2060,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Store user in session
       req.session.userId = user.id;
+      
+      // Migrate anonymous assignments if sessionId provided
+      if (sessionId) {
+        await storage.migrateAnonymousAssignments(sessionId, user.id);
+      }
       
       res.json({
         success: true,

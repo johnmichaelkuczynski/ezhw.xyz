@@ -110,11 +110,13 @@ export type AssignmentListItem = z.infer<typeof assignmentListSchema>;
 export const registerSchema = z.object({
   username: z.string().min(3),
   password: z.string().min(6),
+  sessionId: z.string().optional(), // for migrating anonymous assignments
 });
 
 export const loginSchema = z.object({
   username: z.string(),
   password: z.string().optional(),
+  sessionId: z.string().optional(), // for migrating anonymous assignments
 });
 
 export const userResponseSchema = z.object({

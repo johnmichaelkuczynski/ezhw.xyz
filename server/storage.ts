@@ -22,6 +22,9 @@ export interface IStorage {
   createOrUpdateDailyUsage(sessionId: string, date: string, tokens: number): Promise<void>;
   getUserTokenBalance(userId: number): Promise<number>;
   
+  // Anonymous to authenticated user migration
+  migrateAnonymousAssignments(sessionId: string, userId: number): Promise<Assignment[]>;
+  
   // GPT BYPASS / Humanization methods
   createDocument(document: InsertDocument): Promise<Document>;
   getDocument(id: string): Promise<Document | undefined>;
@@ -155,6 +158,35 @@ export class DatabaseStorage implements IStorage {
   async getUserTokenBalance(userId: number): Promise<number> {
     const user = await this.getUserById(userId);
     return user?.tokenBalance || 0;
+  }
+
+  // Anonymous to authenticated user migration
+  async migrateAnonymousAssignments(sessionId: string, userId: number): Promise<Assignment[]> {
+    // Find all assignments for the anonymous session that don't have a userId
+    const anonymousAssignments = await db
+      .select()
+      .from(assignments)
+      .where(and(
+        eq(assignments.sessionId, sessionId),
+        isNull(assignments.userId)
+      ));
+
+    if (anonymousAssignments.length === 0) {
+      return [];
+    }
+
+    // Update all anonymous assignments to be owned by the authenticated user
+    const updatedAssignments = await db
+      .update(assignments)
+      .set({ userId })
+      .where(and(
+        eq(assignments.sessionId, sessionId),
+        isNull(assignments.userId)
+      ))
+      .returning();
+
+    console.log(`Migrated ${updatedAssignments.length} anonymous assignments to user ${userId}`);
+    return updatedAssignments;
   }
 
   // GPT BYPASS / Humanization methods
@@ -464,6 +496,11 @@ export class MemStorage implements IStorage {
   async getDailyUsage(): Promise<DailyUsage | undefined> { return undefined; }
   async createOrUpdateDailyUsage(): Promise<void> { throw new Error("MemStorage does not support daily usage"); }
   async getUserTokenBalance(): Promise<number> { return 0; }
+  
+  // Anonymous to authenticated user migration (not supported in MemStorage)
+  async migrateAnonymousAssignments(): Promise<Assignment[]> { 
+    return []; // MemStorage doesn't support user authentication
+  }
   
   // Stub implementations for GPT BYPASS methods (MemStorage doesn't support these)
   async createDocument(): Promise<Document> { throw new Error("MemStorage does not support documents"); }
