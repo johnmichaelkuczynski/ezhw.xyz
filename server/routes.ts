@@ -2648,8 +2648,8 @@ Respond with the refined solution only:`;
         
         console.log(`[TOKEN DEBUG] User ${user.username} has ${user.tokenBalance} tokens, needs ${totalTokens}`);
         
-        // SPECIAL CASE: jmkuczynski and randyjohnson have unlimited access  
-        if (user.username !== 'jmkuczynski' && user.username !== 'randyjohnson' && (user.tokenBalance || 0) < 50) {
+        // SPECIAL CASE: jmkuczynski and randyjohnson have unlimited access
+        if (user.username !== 'jmkuczynski' && user.username !== 'randyjohnson' && (user.tokenBalance || 0) < totalTokens) {
           return res.status(402).json({ 
             error: "🔒 You've used all your credits. [Buy More Credits]",
             needsUpgrade: true 
@@ -2686,10 +2686,9 @@ Respond with the refined solution only:`;
         // SPECIAL CASE: Don't deduct tokens from jmkuczynski or randyjohnson
         if (user.username !== 'jmkuczynski' && user.username !== 'randyjohnson') {
           console.log(`[TOKEN DEDUCTION] Deducting ${actualTotalTokens} tokens from user ${user.username} (balance: ${user.tokenBalance})`);
-          // Deduct tokens but prevent negative balance
-          const newBalance = Math.max(0, (user.tokenBalance || 0) - actualTotalTokens);
-          await storage.updateUserTokenBalance(userId, newBalance);
-          console.log(`[TOKEN DEDUCTION] New balance: ${newBalance} (prevented negative: ${(user.tokenBalance || 0) - actualTotalTokens})`);
+          // Deduct tokens
+          await storage.updateUserTokenBalance(userId, (user.tokenBalance || 0) - actualTotalTokens);
+          console.log(`[TOKEN DEDUCTION] New balance should be: ${(user.tokenBalance || 0) - actualTotalTokens}`);
           
           // Log token usage
           await storage.createTokenUsage({
