@@ -2885,10 +2885,20 @@ Respond with the refined solution only:`;
   app.delete("/api/assignments/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      // SECURITY: Get user ID from session for isolation
       const userId = req.session.userId;
+      const sessionId = req.headers['x-session-id'] as string;
       
-      await storage.deleteAssignment(id, userId);
+      // Validate ID parameter
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid assignment ID" });
+      }
+      
+      // SECURITY: For anonymous users, sessionId is required
+      if (!userId && !sessionId) {
+        return res.status(400).json({ error: "Session ID is required for anonymous users" });
+      }
+      
+      await storage.deleteAssignment(id, userId, sessionId);
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to delete assignment" });
@@ -2902,6 +2912,144 @@ Respond with the refined solution only:`;
       res.json({ success: true });
     } catch (error) {
       res.status(500).json({ error: "Failed to cleanup assignments" });
+    }
+  });
+
+  // Bulk delete ALL user assignments with user isolation
+  app.delete("/api/assignments", async (req, res) => {
+    try {
+      // SECURITY: Get user ID from session for isolation
+      const userId = req.session.userId;
+      const sessionId = req.headers['x-session-id'] as string;
+      
+      // SECURITY: For anonymous users, sessionId is required
+      if (!userId && !sessionId) {
+        return res.status(400).json({ error: "Session ID is required for anonymous users" });
+      }
+      
+      await storage.deleteAllAssignments(userId, sessionId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Bulk delete assignments error:', error);
+      res.status(500).json({ error: "Failed to delete all assignments" });
+    }
+  });
+
+  // Upload reference document (whole file, not chunked)
+  app.post("/api/documents", upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const userId = req.session.userId;
+      const sessionId = req.headers['x-session-id'] as string;
+      
+      // SECURITY: For anonymous users, sessionId is required
+      if (!userId && !sessionId) {
+        return res.status(400).json({ error: "Session ID is required for anonymous users" });
+      }
+      
+      const fileName = req.file.originalname;
+      const mimeType = req.file.mimetype;
+      const fileSize = req.file.size;
+      
+      // Extract text from uploaded file
+      let extractedText = '';
+      
+      if (mimeType.startsWith('image/')) {
+        extractedText = await performOCR(req.file.buffer, fileName);
+      } else if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || 
+                 mimeType === 'application/msword' ||
+                 fileName.toLowerCase().endsWith('.docx') ||
+                 fileName.toLowerCase().endsWith('.doc')) {
+        extractedText = await extractTextFromWord(req.file.buffer);
+      } else if (mimeType === 'application/pdf') {
+        extractedText = await extractTextFromPDF(req.file.buffer);
+      } else {
+        return res.status(400).json({ error: "File type not supported. Please use images, Word documents, or PDFs." });
+      }
+
+      if (!extractedText.trim()) {
+        return res.status(400).json({ error: "No text could be extracted from the file" });
+      }
+
+      // Create reference document record
+      const document = await storage.createReferenceDocument({
+        userId: userId || null,
+        sessionId: sessionId || null,
+        fileName,
+        mimeType,
+        fileSize,
+        extractedText
+      });
+
+      res.json({ 
+        success: true, 
+        document: {
+          id: document.id,
+          fileName: document.fileName,
+          fileSize: document.fileSize,
+          extractedTextLength: extractedText.length,
+          createdAt: document.createdAt
+        }
+      });
+    } catch (error) {
+      console.error('Reference document upload error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to upload reference document" 
+      });
+    }
+  });
+
+  // Get all reference documents for user
+  app.get("/api/documents", async (req, res) => {
+    try {
+      const userId = req.session.userId;
+      const sessionId = req.headers['x-session-id'] as string;
+      
+      // SECURITY: For anonymous users, sessionId is required
+      if (!userId && !sessionId) {
+        return res.status(400).json({ error: "Session ID is required for anonymous users" });
+      }
+      
+      const documents = await storage.getAllReferenceDocuments(userId, sessionId);
+      
+      res.json(documents.map(doc => ({
+        id: doc.id,
+        fileName: doc.fileName,
+        fileSize: doc.fileSize,
+        extractedTextLength: doc.extractedText?.length || 0,
+        createdAt: doc.createdAt
+      })));
+    } catch (error) {
+      console.error('Get reference documents error:', error);
+      res.status(500).json({ error: "Failed to fetch reference documents" });
+    }
+  });
+
+  // Delete reference document by ID
+  app.delete("/api/documents/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.session.userId;
+      const sessionId = req.headers['x-session-id'] as string;
+      
+      // Validate ID parameter
+      if (isNaN(id)) {
+        return res.status(400).json({ error: "Invalid document ID" });
+      }
+      
+      // SECURITY: For anonymous users, sessionId is required
+      if (!userId && !sessionId) {
+        return res.status(400).json({ error: "Session ID is required for anonymous users" });
+      }
+      
+      await storage.deleteReferenceDocument(id, userId, sessionId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Delete reference document error:', error);
+      res.status(500).json({ error: "Failed to delete reference document" });
     }
   });
 
