@@ -2091,12 +2091,12 @@ ${fullResponse.slice(-1000)}...`;
                                   }}
                                   className="px-8 py-4 text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-xl shadow-lg hover:shadow-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200"
                                 >
-                                  💳 Buy Credits with PayPal
+                                  💳 Buy Credits (PayPal or Stripe)
                                 </Button>
                                 
                                 <div className="text-sm text-green-600 text-center">
                                   <div className="font-semibold">Starting at just $5</div>
-                                  <div>Secure payment via PayPal</div>
+                                  <div>Secure payment via PayPal or Stripe</div>
                                 </div>
                               </div>
                               
