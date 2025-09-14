@@ -2862,6 +2862,136 @@ Respond with the refined solution only:`;
     }
   });
 
+  // Upgrade assignment from preview to full answer
+  app.post("/api/assignments/:id/upgrade", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const userId = req.session.userId;
+      
+      if (!userId) {
+        return res.status(401).json({ error: "Authentication required to upgrade assignments" });
+      }
+      
+      // Get the assignment
+      const assignment = await storage.getAssignment(id, userId);
+      if (!assignment) {
+        return res.status(404).json({ error: "Assignment not found" });
+      }
+      
+      // Check if user has tokens  
+      const user = await authService.getUserById(userId);
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      // Count tokens needed for regeneration
+      const inputTokens = countTokens(assignment.inputText || '');
+      const estimatedOutputTokens = estimateOutputTokens(assignment.inputText || '');
+      const totalTokens = inputTokens + estimatedOutputTokens;
+      
+      console.log(`[UPGRADE DEBUG] User ${user.username} has ${user.tokenBalance} tokens, needs ${totalTokens} for upgrade`);
+      
+      // Check token balance (special case for unlimited users)
+      if (user.username !== 'jmkuczynski' && user.username !== 'randyjohnson' && (user.tokenBalance || 0) < totalTokens) {
+        return res.status(402).json({ 
+          error: "🔒 Insufficient credits to upgrade this assignment. [Buy More Credits]",
+          needsUpgrade: true 
+        });
+      }
+      
+      const startTime = Date.now();
+      
+      // Regenerate full answer with LLM
+      let llmResult: {response: string, graphData?: GraphRequest[]};
+      switch (assignment.llmProvider) {
+        case 'anthropic':
+          llmResult = await processWithAnthropic(assignment.inputText || '');
+          break;
+        case 'openai':
+          llmResult = await processWithOpenAI(assignment.inputText || '');
+          break;
+        case 'azure':
+          llmResult = await processWithAzureOpenAI(assignment.inputText || '');
+          break;
+        case 'perplexity':
+          llmResult = await processWithPerplexity(assignment.inputText || '');
+          break;
+        case 'deepseek':
+          llmResult = await processWithDeepSeekFixed(assignment.inputText || '');
+          break;
+        default:
+          return res.status(400).json({ error: `Unsupported LLM provider: ${assignment.llmProvider}` });
+      }
+      
+      const actualOutputTokens = countTokens(llmResult.response);
+      const actualTotalTokens = inputTokens + actualOutputTokens;
+      const processingTime = Date.now() - startTime;
+      
+      // Deduct tokens (except for unlimited users)
+      if (user.username !== 'jmkuczynski' && user.username !== 'randyjohnson') {
+        console.log(`[UPGRADE DEDUCTION] Deducting ${actualTotalTokens} tokens from user ${user.username}`);
+        const newBalance = Math.max(0, (user.tokenBalance || 0) - actualTotalTokens);
+        await storage.updateUserTokenBalance(userId, newBalance);
+        
+        // Log token usage
+        await storage.createTokenUsage({
+          userId,
+          sessionId: null,
+          inputTokens,
+          outputTokens: actualOutputTokens,
+          remainingBalance: newBalance
+        });
+      }
+      
+      // Generate graphs if required
+      let graphImages: string[] | undefined;
+      let graphDataJsons: string[] | undefined;
+      
+      if (llmResult.graphData && llmResult.graphData.length > 0) {
+        try {
+          graphImages = [];
+          graphDataJsons = [];
+          
+          for (const graphData of llmResult.graphData) {
+            const graphImage = await generateGraph(graphData);
+            graphImages.push(graphImage);
+            graphDataJsons.push(JSON.stringify(graphData));
+          }
+        } catch (error) {
+          console.error('Graph generation error:', error);
+        }
+      }
+      
+      // Update assignment with full response
+      const updatedAssignment = await storage.updateAssignment(id, {
+        llmResponse: llmResult.response,
+        graphData: graphDataJsons,
+        graphImages: graphImages,
+        processingTime: assignment.processingTime + processingTime, // Add upgrade time
+        outputTokens: actualOutputTokens,
+      }, userId);
+      
+      const response: ProcessAssignmentResponse = {
+        id: assignment.id,
+        extractedText: assignment.inputText || '',
+        llmResponse: llmResult.response,
+        graphData: graphDataJsons,
+        graphImages: graphImages,
+        processingTime: processingTime,
+        success: true,
+      };
+      
+      console.log(`[UPGRADE SUCCESS] Assignment ${id} upgraded for user ${user.username}`);
+      res.json(response);
+      
+    } catch (error) {
+      console.error('Assignment upgrade error:', error);
+      res.status(500).json({ 
+        error: error instanceof Error ? error.message : "Failed to upgrade assignment" 
+      });
+    }
+  });
+
   // Get all assignments with user isolation
   app.get("/api/assignments", async (req, res) => {
     try {

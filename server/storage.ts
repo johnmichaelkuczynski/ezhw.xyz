@@ -7,6 +7,7 @@ export interface IStorage {
   createAssignment(assignment: InsertAssignment): Promise<Assignment>;
   getAssignment(id: number, userId?: number, sessionId?: string): Promise<Assignment | undefined>;
   getAllAssignments(userId?: number, sessionId?: string): Promise<Assignment[]>;
+  updateAssignment(id: number, updates: Partial<InsertAssignment>, userId?: number, sessionId?: string): Promise<Assignment | undefined>;
   deleteAssignment(id: number, userId?: number, sessionId?: string): Promise<void>;
   deleteAllAssignments(userId?: number, sessionId?: string): Promise<void>;
   cleanupEmptyAssignments(): Promise<void>;
@@ -102,6 +103,32 @@ export class DatabaseStorage implements IStorage {
     }
     
     return await db.select().from(assignments).where(and(...conditions)).orderBy(assignments.createdAt);
+  }
+
+  async updateAssignment(id: number, updates: Partial<InsertAssignment>, userId?: number, sessionId?: string): Promise<Assignment | undefined> {
+    const conditions = [eq(assignments.id, id)];
+    
+    // SECURITY: Always enforce user isolation for authenticated users
+    if (userId) {
+      conditions.push(eq(assignments.userId, userId));
+    } else {
+      // For anonymous users, enforce sessionId isolation to prevent cross-session updates
+      conditions.push(isNull(assignments.userId));
+      if (sessionId) {
+        conditions.push(eq(assignments.sessionId, sessionId));
+      } else {
+        // No sessionId for anonymous user - don't update anything for security
+        return undefined;
+      }
+    }
+    
+    const [updatedAssignment] = await db
+      .update(assignments)
+      .set(updates)
+      .where(and(...conditions))
+      .returning();
+    
+    return updatedAssignment || undefined;
   }
 
   async deleteAssignment(id: number, userId?: number, sessionId?: string): Promise<void> {
@@ -625,6 +652,34 @@ export class MemStorage implements IStorage {
     return filteredAssignments.sort((a, b) => 
       (b.createdAt?.getTime() || 0) - (a.createdAt?.getTime() || 0)
     );
+  }
+
+  async updateAssignment(id: number, updates: Partial<InsertAssignment>, userId?: number, sessionId?: string): Promise<Assignment | undefined> {
+    const assignment = this.assignments.get(id);
+    if (!assignment) return undefined;
+    
+    // SECURITY: Only update if user/session owns the assignment
+    let canUpdate = false;
+    if (userId) {
+      canUpdate = assignment.userId === userId;
+    } else {
+      canUpdate = assignment.userId === null && assignment.sessionId === sessionId;
+    }
+    
+    if (!canUpdate) return undefined;
+    
+    // Update assignment properties
+    const updatedAssignment = {
+      ...assignment,
+      ...updates,
+      id: assignment.id, // Preserve the original ID
+      createdAt: assignment.createdAt, // Preserve creation time
+    };
+    
+    this.assignments.set(id, updatedAssignment);
+    this.saveToFile();
+    
+    return updatedAssignment;
   }
 
   async deleteAssignment(id: number, userId?: number, sessionId?: string): Promise<void> {
