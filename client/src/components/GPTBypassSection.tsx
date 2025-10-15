@@ -194,6 +194,7 @@ const AI_PROVIDERS = [
 
 interface GPTBypassSectionProps {
   onSendToHomework?: (text: string) => void;
+  onSendToAiChat?: (text: string) => void;
   receivedHomeworkText?: string;
 }
 
@@ -208,7 +209,7 @@ interface TextChunk {
   isProcessing?: boolean;
 }
 
-export default function GPTBypassSection({ onSendToHomework, receivedHomeworkText }: GPTBypassSectionProps) {
+export default function GPTBypassSection({ onSendToHomework, onSendToAiChat, receivedHomeworkText }: GPTBypassSectionProps) {
   const [inputText, setInputText] = useState("");
   const [styleText, setStyleText] = useState(DEFAULT_STYLE_SAMPLE);
   const [outputText, setOutputText] = useState("");

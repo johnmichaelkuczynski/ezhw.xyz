@@ -91,6 +91,31 @@ export default function HomeworkAssistant() {
     });
   };
 
+  // Function to send homework solution to AI Chat
+  const sendSolutionToAiChat = () => {
+    if (!currentResult?.llmResponse) {
+      toast({
+        title: "No solution to send",
+        description: "Generate a homework solution first",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setChatInput(currentResult.llmResponse);
+    
+    // Scroll to AI Chat section
+    const aiChatElement = document.querySelector('[data-testid="ai-chat-section"]');
+    if (aiChatElement) {
+      aiChatElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    
+    toast({
+      title: "Solution sent to AI Chat",
+      description: "Ready to chat about your solution",
+    });
+  };
+
   // Function to receive text from GPT BYPASS Box C to assignment details
   const receiveFromGptBypass = (text: string) => {
     setInputText(text);
@@ -101,6 +126,22 @@ export default function HomeworkAssistant() {
     toast({
       title: "Text received from GPT BYPASS",
       description: "Humanized text added to Assignment Details",
+    });
+  };
+
+  // Function to send text from GPT BYPASS Box C to AI Chat
+  const sendFromGptBypassToAiChat = (text: string) => {
+    setChatInput(text);
+    
+    // Scroll to AI Chat section
+    const aiChatElement = document.querySelector('[data-testid="ai-chat-section"]');
+    if (aiChatElement) {
+      aiChatElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    
+    toast({
+      title: "Text sent to AI Chat",
+      description: "Ready to chat about your humanized text",
     });
   };
 
@@ -1795,9 +1836,21 @@ ${fullResponse.slice(-1000)}...`;
                     onClick={sendSolutionToGptBypass}
                     title="Send to GPT BYPASS for humanization"
                     className="bg-purple-600 hover:bg-purple-700 text-white"
+                    data-testid="button-send-to-gpt-bypass"
                   >
                     <Zap className="w-4 h-4 mr-1" />
                     Send to GPT BYPASS
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={sendSolutionToAiChat}
+                    title="Send to AI Chat for discussion"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    data-testid="button-send-to-ai-chat"
+                  >
+                    <Send className="w-4 h-4 mr-1" />
+                    Send to AI Chat
                   </Button>
                 </div>
               )}
@@ -2524,6 +2577,7 @@ Use Enter to send your message, or Shift+Enter for new lines."
       <div className="mt-16 border-t-4 border-purple-600 pt-8">
         <GPTBypassSection 
           onSendToHomework={receiveFromGptBypass}
+          onSendToAiChat={sendFromGptBypassToAiChat}
           receivedHomeworkText={gptBypassText}
         />
       </div>
