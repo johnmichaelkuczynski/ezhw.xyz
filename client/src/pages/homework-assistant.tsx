@@ -28,7 +28,7 @@ export default function HomeworkAssistant() {
   const [inputText, setInputText] = useState("");
   const [currentAssignmentName, setCurrentAssignmentName] = useState("");
   const [specialInstructions, setSpecialInstructions] = useState("");
-  const [selectedProvider, setSelectedProvider] = useState("deepseek");
+  const [selectedProvider, setSelectedProvider] = useState("openai");
   const [currentResult, setCurrentResult] = useState<any>(null);
   const [wordCount, setWordCount] = useState(0);
   const [aiDetectionResult, setAiDetectionResult] = useState<any>(null);
@@ -1497,8 +1497,8 @@ ${fullResponse.slice(-1000)}...`;
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="anthropic">ZHI 1</SelectItem>
-                  <SelectItem value="openai">ZHI 2</SelectItem>
-                  <SelectItem value="deepseek">ZHI 3 (Default)</SelectItem>
+                  <SelectItem value="openai">ZHI 2 (Default)</SelectItem>
+                  <SelectItem value="deepseek">ZHI 3</SelectItem>
                   <SelectItem value="perplexity">ZHI 4</SelectItem>
                   <SelectItem value="azure">ZHI 5</SelectItem>
                 </SelectContent>
