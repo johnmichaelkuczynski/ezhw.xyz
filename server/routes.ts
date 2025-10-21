@@ -132,6 +132,56 @@ function generatePreview(fullResponse: string): string {
   return fullResponse;
 }
 
+// Extract word count requirement from text
+function extractWordCountRequirement(text: string): number | null {
+  const patterns = [
+    /(\d+)\s*words?/i,
+    /(\d+)\s*word\s*essay/i,
+    /(\d+)\s*word\s*paper/i,
+    /(\d+)\s*word\s*document/i,
+  ];
+  
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) {
+      return parseInt(match[1]);
+    }
+  }
+  return null;
+}
+
+// Extract page count requirement and convert to words (500 words per page)
+function extractPageCountRequirement(text: string): number | null {
+  const patterns = [
+    /(\d+)\s*pages?/i,
+    /(\d+)\s*page\s*essay/i,
+    /(\d+)\s*page\s*paper/i,
+  ];
+  
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) {
+      return parseInt(match[1]) * 500; // 500 words per page
+    }
+  }
+  return null;
+}
+
+// Count words in text
+function countWords(text: string): number {
+  // Remove markdown, LaTeX, and special characters for accurate word count
+  const cleanText = text
+    .replace(/\$\$[\s\S]*?\$\$/g, '') // Remove display math
+    .replace(/\$[^\$]+\$/g, '') // Remove inline math
+    .replace(/```[\s\S]*?```/g, '') // Remove code blocks
+    .replace(/#{1,6}\s/g, '') // Remove markdown headers
+    .replace(/[*_~`]/g, '') // Remove markdown formatting
+    .replace(/GRAPH_DATA_START[\s\S]*?GRAPH_DATA_END/g, ''); // Remove graph data
+  
+  const words = cleanText.trim().split(/\s+/).filter(word => word.length > 0);
+  return words.length;
+}
+
 // Direct DeepSeek processing without content detection (for refinements)
 async function processDirectWithDeepSeek(prompt: string): Promise<{response: string, graphData?: GraphRequest[]}> {
   try {
@@ -882,6 +932,11 @@ async function processWithOpenAI(text: string): Promise<{response: string, graph
     const contentType = detectContentType(text);
     const needsGraph = detectGraphRequirements(text);
     
+    // Check for word/page count requirements
+    const wordCountReq = extractWordCountRequirement(text);
+    const pageCountReq = extractPageCountRequirement(text);
+    const targetWordCount = wordCountReq || pageCountReq;
+    
     let prompt = '';
     
     if (contentType === 'document') {
@@ -966,7 +1021,8 @@ Generate realistic data points based on the scientific/mathematical principles i
 
     prompt += `\n\nAssignment to solve:\n\n${text}`;
 
-    const response = await openai.chat.completions.create({
+    // Initial generation
+    let response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [{ 
         role: "user", 
@@ -975,7 +1031,42 @@ Generate realistic data points based on the scientific/mathematical principles i
       max_tokens: 16000,
     });
 
-    const responseText = response.choices[0]?.message?.content || 'No response generated';
+    let responseText = response.choices[0]?.message?.content || 'No response generated';
+    
+    // If word count requirement exists and not met, continue generating
+    if (targetWordCount && targetWordCount > 0) {
+      let currentWordCount = countWords(responseText);
+      let attempts = 0;
+      const maxAttempts = 10; // Safety limit
+      
+      while (currentWordCount < targetWordCount && attempts < maxAttempts) {
+        console.log(`[CONTINUATION] Current: ${currentWordCount} words, Target: ${targetWordCount} words, Continuing...`);
+        
+        // Continue the essay
+        const continuationPrompt = `Continue writing the essay from where you left off. You have written ${currentWordCount} words so far, and need to reach ${targetWordCount} words total. 
+
+Continue seamlessly from:
+"${responseText.slice(-500)}"
+
+DO NOT repeat what was already written. DO NOT add a new title or introduction. Simply continue the essay naturally to reach the full ${targetWordCount} word requirement. Write approximately ${Math.min(targetWordCount - currentWordCount, 3000)} more words.`;
+        
+        const continuationResponse = await openai.chat.completions.create({
+          model: "gpt-4o",
+          messages: [{ 
+            role: "user", 
+            content: continuationPrompt
+          }],
+          max_tokens: 16000,
+        });
+        
+        const continuation = continuationResponse.choices[0]?.message?.content || '';
+        responseText += '\n\n' + continuation;
+        currentWordCount = countWords(responseText);
+        attempts++;
+      }
+      
+      console.log(`[FINAL] Generated ${currentWordCount} words (target: ${targetWordCount})`);
+    }
     
     // Extract multiple graph data if present
     const graphData: GraphRequest[] = [];
