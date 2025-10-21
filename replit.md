@@ -1,8 +1,8 @@
-# Homework Assistant
+# EZHW
 
 ## Overview
 
-The Homework Assistant is a full-stack web application designed to provide AI-powered solutions for various homework types. It accepts text, image, PDF, and document inputs, leveraging multiple Large Language Models (LLMs) to generate detailed answers. Key capabilities include drag-and-drop file uploads, voice input, mathematical notation rendering, and PDF export. The project aims to offer a comprehensive, user-friendly tool for academic assistance, with ambitions to serve a wide market of students and educators.
+EZHW (formerly Homework Assistant) is a full-stack web application designed to provide AI-powered solutions for various homework types. It accepts text, image, PDF, and document inputs, leveraging multiple Large Language Models (LLMs) to generate detailed answers. Key capabilities include drag-and-drop file uploads, voice input, mathematical notation rendering, and PDF export. The project aims to offer a comprehensive, user-friendly tool for academic assistance, with ambitions to serve a wide market of students and educators.
 
 ## User Preferences
 
