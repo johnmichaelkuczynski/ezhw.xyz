@@ -735,6 +735,11 @@ async function processWithAnthropic(text: string): Promise<{response: string, gr
     const contentType = detectContentType(text);
     const needsGraph = detectGraphRequirements(text);
     
+    // Check for word/page count requirements
+    const wordCountReq = extractWordCountRequirement(text);
+    const pageCountReq = extractPageCountRequirement(text);
+    const targetWordCount = wordCountReq || pageCountReq;
+    
     let prompt = '';
     
     if (contentType === 'document') {
@@ -840,7 +845,8 @@ Generate realistic data points based on the scientific/mathematical principles i
 
     prompt += `\n\n${text}`;
 
-    const message = await anthropic.messages.create({
+    // Initial generation
+    let message = await anthropic.messages.create({
       max_tokens: 16000,
       messages: [{ 
         role: 'user', 
@@ -849,15 +855,49 @@ Generate realistic data points based on the scientific/mathematical principles i
       model: 'claude-3-7-sonnet-20250219',
     });
 
-    const response = message.content[0]?.type === 'text' ? message.content[0].text : 'No response generated';
+    let responseText = message.content[0]?.type === 'text' ? message.content[0].text : 'No response generated';
+    
+    // If word count requirement exists and not met, continue generating
+    if (targetWordCount && targetWordCount > 0) {
+      let currentWordCount = countWords(responseText);
+      let attempts = 0;
+      const maxAttempts = 10;
+      
+      while (currentWordCount < targetWordCount && attempts < maxAttempts) {
+        console.log(`[ANTHROPIC CONTINUATION] Current: ${currentWordCount} words, Target: ${targetWordCount} words, Continuing...`);
+        
+        const continuationPrompt = `Continue writing the essay from where you left off. You have written ${currentWordCount} words so far, and need to reach ${targetWordCount} words total. 
+
+Continue seamlessly from:
+"${responseText.slice(-500)}"
+
+DO NOT repeat what was already written. DO NOT add a new title or introduction. Simply continue the essay naturally to reach the full ${targetWordCount} word requirement. Write approximately ${Math.min(targetWordCount - currentWordCount, 3000)} more words.`;
+        
+        const continuation = await anthropic.messages.create({
+          max_tokens: 16000,
+          messages: [{ 
+            role: 'user', 
+            content: continuationPrompt
+          }],
+          model: 'claude-3-7-sonnet-20250219',
+        });
+        
+        const contText = continuation.content[0]?.type === 'text' ? continuation.content[0].text : '';
+        responseText += '\n\n' + contText;
+        currentWordCount = countWords(responseText);
+        attempts++;
+      }
+      
+      console.log(`[ANTHROPIC FINAL] Generated ${currentWordCount} words (target: ${targetWordCount})`);
+    }
     
     // Extract multiple graph data if present
     const graphData: GraphRequest[] = [];
-    if (needsGraph && response.includes('GRAPH_DATA_START')) {
+    if (needsGraph && responseText.includes('GRAPH_DATA_START')) {
       try {
         const graphRegex = /GRAPH_DATA_START([\s\S]*?)GRAPH_DATA_END/g;
         let match;
-        while ((match = graphRegex.exec(response)) !== null) {
+        while ((match = graphRegex.exec(responseText)) !== null) {
           try {
             const graphJson = match[1].trim();
             const parsedGraph = JSON.parse(graphJson);
@@ -872,7 +912,7 @@ Generate realistic data points based on the scientific/mathematical principles i
     }
 
     // Clean the response to remove graph data markers
-    const cleanedResponse = response
+    const cleanedResponse = responseText
       .replace(/GRAPH_DATA_START[\s\S]*?GRAPH_DATA_END/g, '')
       .trim();
 
