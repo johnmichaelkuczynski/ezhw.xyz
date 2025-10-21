@@ -153,7 +153,7 @@ async function processDirectWithDeepSeek(prompt: string): Promise<{response: str
             content: prompt
           }
         ],
-        max_tokens: 16000,
+        max_tokens: 8192,
         temperature: 0.7,
       }),
     });
@@ -285,7 +285,7 @@ Generate realistic data points based on the scientific/mathematical principles i
         role: "user", 
         content: prompt
       }],
-      max_tokens: 16000,
+      max_tokens: 8192,
       temperature: 0.1,
     });
 
