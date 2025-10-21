@@ -126,62 +126,10 @@ function detectContentType(text: string): 'math' | 'document' | 'general' {
   return 'general';
 }
 
-// Generate preview for freemium model
+// Generate preview for freemium model - DISABLED - ALWAYS RETURN FULL RESPONSE
 function generatePreview(fullResponse: string): string {
-  // Remove any existing graph data JSON from the end
-  const lines = fullResponse.split('\n');
-  let contentLines = [...lines];
-  
-  // Remove graph data if present
-  const graphStartIndex = contentLines.findIndex(line => 
-    line.trim().startsWith('```json') || line.includes('GRAPH_DATA_START')
-  );
-  if (graphStartIndex !== -1) {
-    contentLines = contentLines.slice(0, graphStartIndex);
-  }
-  
-  const cleanResponse = contentLines.join('\n').trim();
-  
-  // Split into sentences for better preview control
-  const sentences = cleanResponse.split(/(?<=[.!?])\s+/);
-  
-  // For math problems: Show problem setup + first step
-  if (detectContentType(cleanResponse) === 'math') {
-    // Find first few sentences that explain the approach
-    let preview = '';
-    let sentenceCount = 0;
-    
-    for (const sentence of sentences) {
-      preview += sentence + ' ';
-      sentenceCount++;
-      
-      // Stop after 2-3 sentences or when we hit the actual solution steps
-      if (sentenceCount >= 2 || sentence.includes('Step 1') || sentence.includes('Solution:')) {
-        break;
-      }
-    }
-    
-    return preview.trim() + '\n\n**🔒 Complete solution with all steps available with credits**\n\n[Buy Credits with PayPal to see the full step-by-step solution]';
-  }
-  
-  // For documents: Show introduction + first main point
-  else if (detectContentType(cleanResponse) === 'document') {
-    const words = cleanResponse.split(/\s+/);
-    const previewWords = words.slice(0, 150); // ~150 words preview
-    
-    return previewWords.join(' ') + '...\n\n**🔒 Complete analysis available with credits**\n\n[Buy Credits with PayPal to see the full detailed analysis]';
-  }
-  
-  // For general questions: Show first paragraph
-  else {
-    const paragraphs = cleanResponse.split(/\n\s*\n/);
-    const firstParagraph = paragraphs[0] || '';
-    
-    const words = firstParagraph.split(/\s+/);
-    const previewWords = words.slice(0, 100); // ~100 words preview
-    
-    return previewWords.join(' ') + '...\n\n**🔒 Complete answer available with credits**\n\n[Buy Credits with PayPal to see the full detailed response]';
-  }
+  // PAYWALL DISABLED - RETURN FULL CONTENT ALWAYS, NO PREVIEW TRUNCATION
+  return fullResponse;
 }
 
 // Direct DeepSeek processing without content detection (for refinements)

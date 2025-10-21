@@ -15,31 +15,15 @@ export function estimateOutputTokens(inputText: string): number {
   const isMathProblem = /\b(solve|equation|calculate|derivative|integral|limit|matrix|algebra|geometry|calculus|statistics|probability)\b/i.test(inputText);
   
   if (isMathProblem) {
-    return Math.min(inputTokens * 3, 1000); // Cap at 1000 tokens
+    return inputTokens * 3; // NO CAP - UNLIMITED
   }
   
-  return Math.min(inputTokens * 2, 800); // Cap at 800 tokens
+  return inputTokens * 2; // NO CAP - UNLIMITED
 }
 
 export function truncateResponse(response: string, maxTokens: number): string {
-  const targetLength = maxTokens * 4; // Approximate characters
-  
-  if (response.length <= targetLength) {
-    return response;
-  }
-  
-  // Try to break at a natural point (sentence end)
-  const truncated = response.substring(0, targetLength);
-  const lastPeriod = truncated.lastIndexOf('.');
-  const lastNewline = truncated.lastIndexOf('\n');
-  
-  const breakPoint = Math.max(lastPeriod, lastNewline);
-  
-  if (breakPoint > targetLength * 0.8) {
-    return truncated.substring(0, breakPoint + 1);
-  }
-  
-  return truncated;
+  // DISABLED - RETURN FULL RESPONSE ALWAYS, NO TRUNCATION
+  return response;
 }
 
 export const TOKEN_LIMITS = {

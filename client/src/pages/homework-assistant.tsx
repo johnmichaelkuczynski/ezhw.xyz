@@ -12,7 +12,7 @@ import { MathRenderer } from "@/components/ui/math-renderer";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Send, Copy, Trash2, CheckCircle, History, Lightbulb, Download, Edit3, Save, X, ArrowDown, FileText, Mail, Printer, RotateCcw, Zap } from "lucide-react";
+import { Loader2, Send, Copy, Trash2, CheckCircle, History, Lightbulb, Download, Edit3, Save, X, ArrowDown, FileText, Mail, Printer, RotateCcw, Zap, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { TokenStatus } from "@/components/ui/token-status";
 import { PaymentDialog } from "@/components/ui/payment-dialog";
@@ -1468,9 +1468,12 @@ ${fullResponse.slice(-1000)}...`;
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col space-y-4">
             <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900">EZHW</h1>
-                <p className="text-sm text-slate-600 mt-1">AI-powered assignment solver</p>
+              <div className="flex items-center gap-2">
+                <Star className="w-6 h-6 text-yellow-500 fill-yellow-500" />
+                <div>
+                  <h1 className="text-2xl font-bold text-slate-900">EZHW</h1>
+                  <p className="text-sm text-slate-600 mt-1">AI-powered assignment solver</p>
+                </div>
               </div>
               {/* Token Status - Full width on its own line */}
               <div className="flex-1 max-w-md ml-8">
