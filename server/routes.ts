@@ -3395,6 +3395,219 @@ Respond with the refined solution only:`;
     }
   });
 
+  // Grading endpoint - STRICT adherence to user's grading instructions
+  app.post("/api/grade-submission", async (req, res) => {
+    try {
+      const { assignmentPrompt, gradingInstructions, studentSubmission } = req.body;
+      
+      if (!assignmentPrompt || !gradingInstructions || !studentSubmission) {
+        return res.status(400).json({ error: "All fields are required" });
+      }
+
+      // Build prompt that treats grading instructions as ABSOLUTE LAW
+      const gradingPrompt = `
+YOU ARE A GRADING ASSISTANT. YOUR ONLY JOB IS TO FOLLOW THE INSTRUCTOR'S GRADING INSTRUCTIONS EXACTLY AS WRITTEN.
+
+=== ABSOLUTE LAW - GRADING INSTRUCTIONS (FOLLOW THESE EXACTLY) ===
+${gradingInstructions}
+=== END OF GRADING INSTRUCTIONS ===
+
+CRITICAL RULES:
+1. The grading instructions above are ABSOLUTE LAW - you MUST follow them EXACTLY
+2. DO NOT apply any generic grading criteria
+3. DO NOT use your own judgment about quality unless the instructions ask for it
+4. Use the EXACT grading format specified in the instructions (letter grades, numeric, pass/fail, etc.)
+5. If the instructions say "A IF PERFECT" then give it an A if it's perfect - NOT 95/100
+6. If the instructions say "B IF PERFECT BUT DOES NOT INCLUDE QUOTES" then check for quotes and give a B if appropriate
+7. Follow the instructor's rubric PRECISELY - no deviations, no conversions, no interpretations
+8. Your grade must be in the EXACT format the instructions specify
+
+ASSIGNMENT:
+${assignmentPrompt}
+
+STUDENT SUBMISSION:
+${studentSubmission}
+
+Now grade this submission following the GRADING INSTRUCTIONS EXACTLY. Provide:
+1. A grade in EXACTLY the format specified by the grading instructions
+2. Brief comments explaining how the submission matches the grading criteria
+
+Format your response EXACTLY like this:
+GRADE: [grade in the format specified by the rubric]
+COMMENTS: [your comments here]
+`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ 
+          role: "user", 
+          content: gradingPrompt
+        }],
+        max_tokens: 2000,
+      });
+
+      const responseText = response.choices[0]?.message?.content || '';
+      
+      // Parse the response - handle any grade format
+      const gradeMatch = responseText.match(/GRADE:\s*(.+?)(?=\n|$)/i);
+      const commentsMatch = responseText.match(/COMMENTS:\s*([\s\S]+)/i);
+      
+      const gradeText = gradeMatch ? gradeMatch[1].trim() : 'No grade';
+      const comments = commentsMatch ? commentsMatch[1].trim() : responseText;
+
+      // Try to convert to numeric for display, but preserve original
+      let numericGrade = 0;
+      const numericMatch = gradeText.match(/(\d+)(?:\/100)?/);
+      if (numericMatch) {
+        numericGrade = parseInt(numericMatch[1]);
+      } else if (gradeText.match(/\bA\+?\b/i)) {
+        numericGrade = 98;
+      } else if (gradeText.match(/\bA-?\b/i)) {
+        numericGrade = 92;
+      } else if (gradeText.match(/\bB\+?\b/i)) {
+        numericGrade = 88;
+      } else if (gradeText.match(/\bB-?\b/i)) {
+        numericGrade = 82;
+      } else if (gradeText.match(/\bC\+?\b/i)) {
+        numericGrade = 78;
+      } else if (gradeText.match(/\bC-?\b/i)) {
+        numericGrade = 72;
+      } else if (gradeText.match(/\bD\b/i)) {
+        numericGrade = 65;
+      } else if (gradeText.match(/\bF\b/i)) {
+        numericGrade = 50;
+      } else if (gradeText.match(/pass/i)) {
+        numericGrade = 85;
+      } else if (gradeText.match(/fail/i)) {
+        numericGrade = 40;
+      }
+
+      res.json({
+        grade: numericGrade,
+        gradeText: gradeText, // Original grade as specified by rubric
+        comments,
+        feedback: gradingInstructions
+      });
+    } catch (error: any) {
+      console.error('Grading error:', error);
+      res.status(500).json({ error: error.message || 'Grading failed' });
+    }
+  });
+
+  // Grade adjustment endpoint
+  app.post("/api/adjust-grade", async (req, res) => {
+    try {
+      const { 
+        assignmentPrompt, 
+        gradingInstructions, 
+        studentSubmission,
+        currentGrade,
+        currentComments,
+        adjustmentType,
+        studentName 
+      } = req.body;
+      
+      if (!assignmentPrompt || !gradingInstructions || !studentSubmission || !adjustmentType) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      let adjustmentPrompt = '';
+      
+      if (adjustmentType === 'reevaluate') {
+        adjustmentPrompt = `Re-evaluate this submission completely from scratch, following the grading instructions exactly.`;
+      } else if (adjustmentType === 'higher') {
+        adjustmentPrompt = `The current grade of ${currentGrade}/100 is too low. Re-evaluate and give a higher grade that better reflects the submission's quality according to the grading instructions.`;
+      } else if (adjustmentType === 'lower') {
+        adjustmentPrompt = `The current grade of ${currentGrade}/100 is too high. Re-evaluate and give a lower grade that better reflects the submission's issues according to the grading instructions.`;
+      } else {
+        adjustmentPrompt = `The grade of ${currentGrade}/100 is appropriate. Provide the same grade with refined comments.`;
+      }
+
+      const gradingPrompt = `
+YOU ARE A GRADING ASSISTANT. YOUR ONLY JOB IS TO FOLLOW THE INSTRUCTOR'S GRADING INSTRUCTIONS EXACTLY AS WRITTEN.
+
+=== ABSOLUTE LAW - GRADING INSTRUCTIONS (FOLLOW THESE EXACTLY) ===
+${gradingInstructions}
+=== END OF GRADING INSTRUCTIONS ===
+
+ADJUSTMENT REQUEST: ${adjustmentPrompt}
+
+CRITICAL RULES:
+1. The grading instructions above are ABSOLUTE LAW - you MUST follow them EXACTLY
+2. Use the EXACT grading format specified in the instructions (letter grades, numeric, pass/fail, etc.)
+3. Follow the instructor's rubric PRECISELY - no deviations, no conversions
+
+ASSIGNMENT:
+${assignmentPrompt}
+
+STUDENT SUBMISSION:
+${studentSubmission}
+
+PREVIOUS GRADE: ${currentGrade}
+PREVIOUS COMMENTS: ${currentComments}
+
+Now grade this submission following the GRADING INSTRUCTIONS EXACTLY and the adjustment request. Provide:
+1. A grade in EXACTLY the format specified by the grading instructions
+2. Brief comments explaining how the submission matches the grading criteria
+
+Format your response EXACTLY like this:
+GRADE: [grade in the format specified by the rubric]
+COMMENTS: [your comments here]
+`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ 
+          role: "user", 
+          content: gradingPrompt
+        }],
+        max_tokens: 2000,
+      });
+
+      const responseText = response.choices[0]?.message?.content || '';
+      
+      // Parse the response - handle any grade format
+      const gradeMatch = responseText.match(/GRADE:\s*(.+?)(?=\n|$)/i);
+      const commentsMatch = responseText.match(/COMMENTS:\s*([\s\S]+)/i);
+      
+      const gradeText = gradeMatch ? gradeMatch[1].trim() : 'No grade';
+      const comments = commentsMatch ? commentsMatch[1].trim() : responseText;
+
+      // Try to convert to numeric for display, but preserve original
+      let numericGrade = currentGrade || 0;
+      const numericMatch = gradeText.match(/(\d+)(?:\/100)?/);
+      if (numericMatch) {
+        numericGrade = parseInt(numericMatch[1]);
+      } else if (gradeText.match(/\bA\+?\b/i)) {
+        numericGrade = 98;
+      } else if (gradeText.match(/\bA-?\b/i)) {
+        numericGrade = 92;
+      } else if (gradeText.match(/\bB\+?\b/i)) {
+        numericGrade = 88;
+      } else if (gradeText.match(/\bB-?\b/i)) {
+        numericGrade = 82;
+      } else if (gradeText.match(/\bC\+?\b/i)) {
+        numericGrade = 78;
+      } else if (gradeText.match(/\bC-?\b/i)) {
+        numericGrade = 72;
+      } else if (gradeText.match(/\bD\b/i)) {
+        numericGrade = 65;
+      } else if (gradeText.match(/\bF\b/i)) {
+        numericGrade = 50;
+      }
+
+      res.json({
+        grade: numericGrade,
+        gradeText: gradeText, // Original grade as specified by rubric
+        comments,
+        feedback: gradingInstructions
+      });
+    } catch (error: any) {
+      console.error('Grade adjustment error:', error);
+      res.status(500).json({ error: error.message || 'Grade adjustment failed' });
+    }
+  });
+
   // AI detection endpoint
   app.post("/api/ai-detection", async (req, res) => {
     try {
