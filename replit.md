@@ -31,11 +31,13 @@ The application employs a clear client-server architecture.
 - **File Processing Pipeline**: Standardized process from upload to text extraction, LLM processing, graph detection, and response generation.
 - **Integrated Graph Generation**: Automatic detection and server-side creation of graphs (line, bar, scatter) based on LLM-generated data, seamlessly embedded into solutions. Supports multiple graphs per assignment.
 - **LLM Integration**: Designed for multiple AI providers, allowing user selection and leveraging their capabilities for detailed solutions. Intelligent content detection ensures LaTeX notation is applied only to mathematical problems.
+- **Automatic Word Count Continuation**: Detects word/page count requirements in prompts and automatically continues generating until target length is reached (up to 10 continuation cycles for OpenAI and Anthropic).
 - **Voice Input**: Utilizes browser Web Speech API and Azure Speech Services for real-time transcription.
 - **Mathematical Notation**: MathJax integration provides full LaTeX support, optimized for display and PDF export.
 - **Dual Payment System**: Complete payment infrastructure with both PayPal and Stripe integration for user authentication, session tracking, and flexible payment options.
 - **Multi-User Data Isolation**: A single shared PostgreSQL database enforces user-scoped data access via `user_id` filtering, preventing cross-user data access and ensuring secure deletion. Includes support for anonymous users.
 - **GPT BYPASS**: Integrated functionality for text rewriting and AI detection score reduction, with a dedicated interface and seamless workflow between homework assistant and bypass features.
+- **Grading Assistant**: AI-powered grading tool that treats instructor's grading rubric as ABSOLUTE LAW, supporting any grading format (letter grades, numeric, pass/fail, etc.) with strict adherence to user-specified criteria.
 
 ## External Dependencies
 
@@ -103,3 +105,22 @@ The application employs a clear client-server architecture.
   - Solution: Updated to valid GPTZero API key with proper authentication and API credits
   - Result: AI detection now returns accurate real-time scores matching GPTZero's direct interface
   - GPT BYPASS feature now provides precise AI detection scoring for both original and humanized text
+
+### October 21, 2025
+- **Automatic Word Count Continuation System**: Implemented intelligent continuation for exact length requirements
+  - Detects word count requirements (e.g., "2500 words") and page count requirements (auto-converts to ~500 words/page)
+  - Automatically continues generating content in chunks until target word count is reached
+  - Supports up to 10 continuation cycles with seamless merging
+  - Implemented for OpenAI (ZHI 2) and Anthropic (ZHI 1) providers
+  - Server logs show real-time progress: "[CONTINUATION] Current: 800 words, Target: 2500 words, Continuing..."
+  - Ensures essays meet EXACT word count requirements specified by user
+- **Grading Assistant Feature COMPLETED**: Built complete AI-powered grading system with STRICT rubric adherence
+  - Three-panel interface: Assignment Prompt, Grading Instructions, Student Submission
+  - Backend API (/api/grade-submission, /api/adjust-grade) treats grading instructions as ABSOLUTE LAW
+  - Supports ANY grading format: letter grades (A/B/C), numeric (0-100), pass/fail, or custom rubrics
+  - Prompt explicitly instructs LLM to follow instructor's rubric EXACTLY without applying generic criteria
+  - Example: If rubric says "A IF PERFECT; B IF PERFECT BUT DOES NOT INCLUDE QUOTES", system gives letter grade, not 95/100
+  - UI displays original grade format with numeric equivalent for reference
+  - Grade adjustment feature allows re-evaluation with options: higher, lower, appropriate, or complete re-evaluation
+  - Route available at /grading path
+  - Critical fix: Removed forced numeric conversion that was ignoring user's specified grading format
