@@ -205,7 +205,7 @@ async function processDirectWithDeepSeek(prompt: string): Promise<{response: str
             content: prompt
           }
         ],
-        max_tokens: 4000,
+        max_tokens: 16000,
         temperature: 0.7,
       }),
     });
@@ -337,7 +337,7 @@ Generate realistic data points based on the scientific/mathematical principles i
         role: "user", 
         content: prompt
       }],
-      max_tokens: 4000,
+      max_tokens: 16000,
       temperature: 0.1,
     });
 
@@ -720,7 +720,7 @@ async function processWithAnthropicChat(message: string, conversationHistory: Ar
 
     const response = await anthropic.messages.create({
       model: "claude-3-sonnet-20240229",
-      max_tokens: 4000,
+      max_tokens: 16000,
       messages: messages
     });
 
@@ -843,7 +843,7 @@ Generate realistic data points based on the scientific/mathematical principles i
     prompt += `\n\n${text}`;
 
     const message = await anthropic.messages.create({
-      max_tokens: 4000,
+      max_tokens: 16000,
       messages: [{ 
         role: 'user', 
         content: prompt
@@ -918,7 +918,7 @@ async function processWithOpenAIChat(message: string, conversationHistory: Array
     const response = await openai.chat.completions.create({
       model: "gpt-4",
       messages: messages,
-      max_tokens: 4000,
+      max_tokens: 16000,
     });
 
     const responseText = response.choices[0]?.message?.content || 'No response generated';
@@ -1024,7 +1024,7 @@ Generate realistic data points based on the scientific/mathematical principles i
         role: "user", 
         content: prompt
       }],
-      max_tokens: 4000,
+      max_tokens: 16000,
     });
 
     const responseText = response.choices[0]?.message?.content || 'No response generated';
@@ -1152,7 +1152,7 @@ Generate realistic data points based on the scientific/mathematical principles i
         role: "user", 
         content: prompt
       }],
-      max_tokens: 4000,
+      max_tokens: 16000,
     });
 
     const responseText = response.choices[0]?.message?.content || 'No response generated';
@@ -1228,7 +1228,7 @@ async function processWithPerplexityChat(message: string, conversationHistory: A
       body: JSON.stringify({
         model: 'llama-3.1-sonar-large-128k-online',
         messages: messages,
-        max_tokens: 4000,
+        max_tokens: 16000,
         temperature: 0.1,
         stream: false,
       }),
@@ -1341,7 +1341,7 @@ Generate realistic data points based on the scientific/mathematical principles i
             content: prompt
           }
         ],
-        max_tokens: 4000,
+        max_tokens: 16000,
         temperature: 0.1,
         stream: false,
       }),
