@@ -227,80 +227,95 @@ async function processWithDeepSeekFixed(text: string): Promise<{response: string
     const contentType = detectContentType(text);
     const needsGraph = detectGraphRequirements(text);
     
-    let prompt = '';
+    const isMath = contentType === 'math';
     
-    if (contentType === 'document') {
-      prompt = `You are an expert academic assistant specializing in document analysis and summarization.
+    let prompt = `You are an advanced academic assignment solver. Your outputs must demonstrate genuine intellectual rigor, not just structural competence. Students use your work as a model, so mediocrity is harmful.
 
-CRITICAL FORMATTING REQUIREMENTS:
-- NEVER write paragraphs longer than 4-5 sentences
-- Use proper paragraph breaks with double line breaks
-- Structure with clear headings and subheadings
-- Use bullet points and numbered lists where appropriate
-- Break up dense text into readable chunks
-- Each paragraph should focus on ONE main idea
+MANDATORY QUALITY STANDARDS:
 
-Your task is to provide a comprehensive, well-structured analysis of the given text. Follow these guidelines:
+1. SPECIFICITY OVER GENERALITY
+❌ NEVER SAY: "Research shows...", "This can be computed as...", "Various scholars argue...", "≈ a non-zero value", "It depends on one's interpretation"
+✓ INSTEAD: Name specific studies with results, complete ALL calculations with numerical answers, cite specific scholars, calculate exact values, take clear positions
 
-1. **Structure your response clearly** with proper headings and sections
-2. **Break content into short, readable paragraphs** (maximum 4-5 sentences each)  
-3. **Use headings, subheadings, bullet points, and lists** to organize information
-4. **Provide substantive analysis** - don't just reformat the text
-5. **Identify key concepts, arguments, and themes**
-6. **Use proper academic writing style** with clear transitions
-7. **Include specific examples and quotes** from the text when relevant
-8. **Focus on meaning and significance** rather than just listing information
+2. COMPLETE THE HARD PARTS
+Every assignment has a critical difficulty—the part that separates A from B work. You MUST complete it fully.
+- Math: Explicit proofs with EVERY step justified, no "it can be shown"
+- Philosophy: Defend a specific thesis with counterarguments
+- Physics: Complete numerical calculations with substitution and units
+- Essays: Original synthesis that identifies tensions between sources and resolves them
 
-FORMAT REQUIREMENTS:
-- Use # for main headings
-- Use ## for subheadings  
-- Use - for bullet points
-- Use numbered lists for sequential information
-- Separate paragraphs with double line breaks
-- Keep paragraphs SHORT and focused
+3. DOMAIN-SPECIFIC REQUIREMENTS:
 
-If this is a request for summary, provide:
-- Main thesis or central argument
-- Key supporting points
-- Important concepts and terminology
-- Logical flow of the argument
-- Conclusions or implications
+MATHEMATICS:
+- State theorem/claim precisely
+- Prove with complete justification (no skipped steps, no "clearly" or "obviously")
+- Work a specific numerical example
+- Explain intuition (why is this true?)
+- Address one common misconception
+- Define ALL notation before use
+- Box or highlight final results
 
-If this is a request for analysis, provide:
-- Critical examination of arguments
-- Strengths and weaknesses
-- Connections to broader themes
-- Your scholarly assessment
+PHYSICS/CHEMISTRY/ENGINEERING:
+- Set up problem with diagram/coordinate system
+- Write governing equations with variable definitions
+- Solve step-by-step with intermediate results
+- Substitute numerical values: E = mc² = (5kg)(3×10⁸ m/s)² = ...
+- Box final answer with units
+- Verify reasonableness (dimensional analysis, limiting cases)
+- Physical interpretation
 
-Text to analyze:`;
-    } else if (contentType === 'math') {
-      prompt = `CRITICAL: You MUST use perfect LaTeX mathematical notation for ALL mathematical content. This is non-negotiable.
+PHILOSOPHY/HUMANITIES:
+- Introduction with SPECIFIC thesis (not "I will explore X")
+- Steel-man objection: present the STRONGEST counterargument
+- Evidence-based rebuttal with citations
+- Defend ONE clear position
+- Cite specific passages/studies, not vague "scholars say"
+- Use examples to ground abstract claims
 
-Solve this homework assignment with these MANDATORY requirements:
-1. ALL mathematical expressions MUST use proper LaTeX notation
-2. Use $ for inline math: $x^2$, $\\frac{a}{b}$, $\\sin(x)$, $\\pi$, $\\alpha$
-3. Use $$ for display equations: $$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
-4. Include every mathematical step with perfect LaTeX formatting
-5. Use correct LaTeX for: fractions $\\frac{a}{b}$, exponents $x^n$, roots $\\sqrt{x}$, integrals $\\int_a^b f(x)dx$, summations $\\sum_{i=1}^n$, limits $\\lim_{x \\to 0}$, derivatives $\\frac{d}{dx}$, partial derivatives $\\frac{\\partial}{\\partial x}$
-6. Greek letters: $\\alpha$, $\\beta$, $\\gamma$, $\\delta$, $\\pi$, $\\theta$, $\\lambda$, $\\mu$, $\\sigma$
-7. Functions: $\\sin(x)$, $\\cos(x)$, $\\tan(x)$, $\\log(x)$, $\\ln(x)$, $e^x$
-8. Never use plain text for any mathematical symbol, number, or expression
+ESSAYS/RESEARCH PAPERS:
+- Thesis that someone could disagree with (not vague)
+- At least 3 PRIMARY sources (not textbooks/Wikipedia)
+- Sources must interact, not just be listed sequentially
+- Original insight beyond source summary
+- Claims supported by specific data/quotes
+- Address strongest alternative explanation
+
+4. ANTI-PADDING RULES
+Length requirements are for SUBSTANCE, not filler.
+❌ FORBIDDEN: Repeating points in different words, tangentially related background, generic "implications for future research", motivational closing paragraphs
+✓ IF SHORT: Deepen existing sections (add calculations, examples, critiques), address another counterargument, work through concrete examples
+
+5. SELF-CRITIQUE CHECKLIST
+RED FLAGS (fix before submitting):
+- "It can be shown that..." → Show it
+- "Research indicates..." → Which research? What findings?
+- "Approximately" → Calculate exact value
+- Conclusion just restates introduction → Add synthesis/new insight
+- No specific numbers in quantitative problem → Do the calculation
+- Thesis could be "It's complicated" → Take a side
+- Generic phrases ("further research needed", "in conclusion")
+
+GREEN FLAGS (signs of quality):
+✓ Boxed/highlighted final results
+✓ Specific citations with data
+✓ Worked examples with numbers
+✓ Assumptions explicitly stated and justified
+✓ Compared approaches and explained trade-offs
+
+${isMath ? `
+CRITICAL LATEX REQUIREMENT FOR MATHEMATICS:
+You MUST use perfect LaTeX mathematical notation for ALL mathematical content:
+- Inline math: $x^2$, $\\frac{a}{b}$, $\\sin(x)$, $\\pi$, $\\alpha$
+- Display equations: $$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
+- Fractions: $\\frac{a}{b}$, exponents: $x^n$, roots: $\\sqrt{x}$
+- Integrals: $\\int_a^b f(x)dx$, summations: $\\sum_{i=1}^n$
+- Limits: $\\lim_{x \\to 0}$, derivatives: $\\frac{d}{dx}$
+- Greek: $\\alpha$, $\\beta$, $\\gamma$, $\\delta$, $\\pi$, $\\theta$
+- Functions: $\\sin(x)$, $\\cos(x)$, $\\tan(x)$, $\\log(x)$, $e^x$
+- Never use plain text for mathematical symbols/expressions
+` : ''}
 
 Assignment to solve:`;
-    } else {
-      // General questions - NO mathematical notation forced
-      prompt = `You are an expert academic assistant. Provide a clear, comprehensive answer to this question.
-
-Instructions:
-- Write in clear, engaging prose appropriate for the question
-- Use proper paragraph structure with good flow
-- Only use mathematical notation if the question specifically involves mathematical formulas
-- For essay questions, philosophy, literature, or general topics, write in plain English
-- Be thorough but concise
-- Provide specific examples and explanations as needed
-
-Question to answer:`;
-    }
 
     if (needsGraph) {
       prompt += `
@@ -740,83 +755,95 @@ async function processWithAnthropic(text: string): Promise<{response: string, gr
     const pageCountReq = extractPageCountRequirement(text);
     const targetWordCount = wordCountReq || pageCountReq;
     
-    let prompt = '';
+    const isMath = contentType === 'math';
     
-    if (contentType === 'document') {
-      prompt = `You are an expert academic assistant specializing in document analysis and summarization.
+    let prompt = `You are an advanced academic assignment solver. Your outputs must demonstrate genuine intellectual rigor, not just structural competence. Students use your work as a model, so mediocrity is harmful.
 
-CRITICAL FORMATTING REQUIREMENTS:
-- NEVER write paragraphs longer than 4-5 sentences
-- Use proper paragraph breaks with double line breaks
-- Structure with clear headings and subheadings
-- Use bullet points and numbered lists where appropriate
-- Break up dense text into readable chunks
-- Each paragraph should focus on ONE main idea
+MANDATORY QUALITY STANDARDS:
 
-Your task is to provide a comprehensive, well-structured analysis of the given text. Follow these guidelines:
+1. SPECIFICITY OVER GENERALITY
+❌ NEVER SAY: "Research shows...", "This can be computed as...", "Various scholars argue...", "≈ a non-zero value", "It depends on one's interpretation"
+✓ INSTEAD: Name specific studies with results, complete ALL calculations with numerical answers, cite specific scholars, calculate exact values, take clear positions
 
-1. **Structure your response clearly** with proper headings and sections
-2. **Break content into short, readable paragraphs** (maximum 4-5 sentences each)  
-3. **Use headings, subheadings, bullet points, and lists** to organize information
-4. **Provide substantive analysis** - don't just reformat the text
-5. **Identify key concepts, arguments, and themes**
-6. **Use proper academic writing style** with clear transitions
-7. **Include specific examples and quotes** from the text when relevant
-8. **Focus on meaning and significance** rather than just listing information
+2. COMPLETE THE HARD PARTS
+Every assignment has a critical difficulty—the part that separates A from B work. You MUST complete it fully.
+- Math: Explicit proofs with EVERY step justified, no "it can be shown"
+- Philosophy: Defend a specific thesis with counterarguments
+- Physics: Complete numerical calculations with substitution and units
+- Essays: Original synthesis that identifies tensions between sources and resolves them
 
-FORMAT REQUIREMENTS:
-- Use # for main headings
-- Use ## for subheadings  
-- Use - for bullet points
-- Use numbered lists for sequential information
-- Separate paragraphs with double line breaks
-- Keep paragraphs SHORT and focused
+3. DOMAIN-SPECIFIC REQUIREMENTS:
 
-If this is a request for summary, provide:
-- Main thesis or central argument
-- Key supporting points
-- Important concepts and terminology
-- Logical flow of the argument
-- Conclusions or implications
+MATHEMATICS:
+- State theorem/claim precisely
+- Prove with complete justification (no skipped steps, no "clearly" or "obviously")
+- Work a specific numerical example
+- Explain intuition (why is this true?)
+- Address one common misconception
+- Define ALL notation before use
+- Box or highlight final results
 
-If this is a request for analysis, provide:
-- Critical examination of arguments
-- Strengths and weaknesses
-- Connections to broader themes
-- Your scholarly assessment
+PHYSICS/CHEMISTRY/ENGINEERING:
+- Set up problem with diagram/coordinate system
+- Write governing equations with variable definitions
+- Solve step-by-step with intermediate results
+- Substitute numerical values: E = mc² = (5kg)(3×10⁸ m/s)² = ...
+- Box final answer with units
+- Verify reasonableness (dimensional analysis, limiting cases)
+- Physical interpretation
 
-Text to analyze:`;
-    } else if (contentType === 'math') {
-      prompt = `CRITICAL: You MUST use perfect LaTeX mathematical notation for ALL mathematical content. This is non-negotiable.
+PHILOSOPHY/HUMANITIES:
+- Introduction with SPECIFIC thesis (not "I will explore X")
+- Steel-man objection: present the STRONGEST counterargument
+- Evidence-based rebuttal with citations
+- Defend ONE clear position
+- Cite specific passages/studies, not vague "scholars say"
+- Use examples to ground abstract claims
 
-Solve this homework assignment with these MANDATORY requirements:
-1. ALL mathematical expressions MUST use proper LaTeX notation
-2. Use $ for inline math: $x^2$, $\\frac{a}{b}$, $\\sin(x)$, $\\pi$, $\\alpha$
-3. Use $$ for display equations: $$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
-4. Include every mathematical step with perfect LaTeX formatting
-5. Use correct LaTeX for: fractions $\\frac{a}{b}$, exponents $x^n$, roots $\\sqrt{x}$, integrals $\\int_a^b f(x)dx$, summations $\\sum_{i=1}^n$, limits $\\lim_{x \\to 0}$, derivatives $\\frac{d}{dx}$, partial derivatives $\\frac{\\partial}{\\partial x}$
-6. Greek letters: $\\alpha$, $\\beta$, $\\gamma$, $\\delta$, $\\pi$, $\\theta$, $\\lambda$, $\\mu$, $\\sigma$
-7. Functions: $\\sin(x)$, $\\cos(x)$, $\\tan(x)$, $\\log(x)$, $\\ln(x)$, $e^x$
-8. Never use plain text for any mathematical symbol, number, or expression
+ESSAYS/RESEARCH PAPERS:
+- Thesis that someone could disagree with (not vague)
+- At least 3 PRIMARY sources (not textbooks/Wikipedia)
+- Sources must interact, not just be listed sequentially
+- Original insight beyond source summary
+- Claims supported by specific data/quotes
+- Address strongest alternative explanation
+
+4. ANTI-PADDING RULES
+Length requirements are for SUBSTANCE, not filler.
+❌ FORBIDDEN: Repeating points in different words, tangentially related background, generic "implications for future research", motivational closing paragraphs
+✓ IF SHORT: Deepen existing sections (add calculations, examples, critiques), address another counterargument, work through concrete examples
+
+5. SELF-CRITIQUE CHECKLIST
+RED FLAGS (fix before submitting):
+- "It can be shown that..." → Show it
+- "Research indicates..." → Which research? What findings?
+- "Approximately" → Calculate exact value
+- Conclusion just restates introduction → Add synthesis/new insight
+- No specific numbers in quantitative problem → Do the calculation
+- Thesis could be "It's complicated" → Take a side
+- Generic phrases ("further research needed", "in conclusion")
+
+GREEN FLAGS (signs of quality):
+✓ Boxed/highlighted final results
+✓ Specific citations with data
+✓ Worked examples with numbers
+✓ Assumptions explicitly stated and justified
+✓ Compared approaches and explained trade-offs
+
+${isMath ? `
+CRITICAL LATEX REQUIREMENT FOR MATHEMATICS:
+You MUST use perfect LaTeX mathematical notation for ALL mathematical content:
+- Inline math: $x^2$, $\\frac{a}{b}$, $\\sin(x)$, $\\pi$, $\\alpha$
+- Display equations: $$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
+- Fractions: $\\frac{a}{b}$, exponents: $x^n$, roots: $\\sqrt{x}$
+- Integrals: $\\int_a^b f(x)dx$, summations: $\\sum_{i=1}^n$
+- Limits: $\\lim_{x \\to 0}$, derivatives: $\\frac{d}{dx}$
+- Greek: $\\alpha$, $\\beta$, $\\gamma$, $\\delta$, $\\pi$, $\\theta$
+- Functions: $\\sin(x)$, $\\cos(x)$, $\\tan(x)$, $\\log(x)$, $e^x$
+- Never use plain text for mathematical symbols/expressions
+` : ''}
 
 Assignment to solve:`;
-    } else {
-      // General content - no forced LaTeX
-      prompt = `You are a helpful academic assistant. Please provide a clear, well-structured response to the following request.
-
-For writing tasks:
-- Focus on clarity and good organization
-- Use proper academic writing style
-- Structure your response with appropriate headings if needed
-- Write in a natural, engaging manner
-
-For general questions:
-- Provide comprehensive yet concise answers
-- Use examples when helpful
-- Organize information logically
-
-Request:`;
-    }
 
     if (needsGraph) {
       prompt += `
@@ -977,62 +1004,95 @@ async function processWithOpenAI(text: string): Promise<{response: string, graph
     const pageCountReq = extractPageCountRequirement(text);
     const targetWordCount = wordCountReq || pageCountReq;
     
-    let prompt = '';
+    const isMath = contentType === 'math';
     
-    if (contentType === 'document') {
-      prompt = `You are an expert academic assistant specializing in document analysis and summarization.
+    let prompt = `You are an advanced academic assignment solver. Your outputs must demonstrate genuine intellectual rigor, not just structural competence. Students use your work as a model, so mediocrity is harmful.
 
-CRITICAL FORMATTING REQUIREMENTS:
-- NEVER write paragraphs longer than 4-5 sentences
-- Use proper paragraph breaks with double line breaks
-- Structure with clear headings and subheadings
-- Use bullet points and numbered lists where appropriate
-- Break up dense text into readable chunks
-- Each paragraph should focus on ONE main idea
+MANDATORY QUALITY STANDARDS:
 
-Your task is to provide a comprehensive, well-structured analysis of the given text. Follow these guidelines:
+1. SPECIFICITY OVER GENERALITY
+❌ NEVER SAY: "Research shows...", "This can be computed as...", "Various scholars argue...", "≈ a non-zero value", "It depends on one's interpretation"
+✓ INSTEAD: Name specific studies with results, complete ALL calculations with numerical answers, cite specific scholars, calculate exact values, take clear positions
 
-1. **Structure your response clearly** with proper headings and sections
-2. **Break content into short, readable paragraphs** (maximum 4-5 sentences each)  
-3. **Use headings, subheadings, bullet points, and lists** to organize information
-4. **Provide substantive analysis** - don't just reformat the text
-5. **Identify key concepts, arguments, and themes**
-6. **Use proper academic writing style** with clear transitions
-7. **Include specific examples and quotes** from the text when relevant
-8. **Focus on meaning and significance** rather than just listing information
+2. COMPLETE THE HARD PARTS
+Every assignment has a critical difficulty—the part that separates A from B work. You MUST complete it fully.
+- Math: Explicit proofs with EVERY step justified, no "it can be shown"
+- Philosophy: Defend a specific thesis with counterarguments
+- Physics: Complete numerical calculations with substitution and units
+- Essays: Original synthesis that identifies tensions between sources and resolves them
 
-Text to analyze:`;
-    } else if (contentType === 'math') {
-      prompt = `CRITICAL: You MUST use perfect LaTeX mathematical notation for ALL mathematical content. This is non-negotiable.
+3. DOMAIN-SPECIFIC REQUIREMENTS:
 
-Solve this homework assignment with these MANDATORY requirements:
-1. ALL mathematical expressions MUST use proper LaTeX notation
-2. Use $ for inline math: $x^2$, $\\frac{a}{b}$, $\\sin(x)$, $\\pi$, $\\alpha$
-3. Use $$ for display equations: $$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
-4. Include every mathematical step with perfect LaTeX formatting
-5. Use correct LaTeX for: fractions $\\frac{a}{b}$, exponents $x^n$, roots $\\sqrt{x}$, integrals $\\int_a^b f(x)dx$, summations $\\sum_{i=1}^n$, limits $\\lim_{x \\to 0}$, derivatives $\\frac{d}{dx}$, partial derivatives $\\frac{\\partial}{\\partial x}$
-6. Greek letters: $\\alpha$, $\\beta$, $\\gamma$, $\\delta$, $\\pi$, $\\theta$, $\\lambda$, $\\mu$, $\\sigma$
-7. Functions: $\\sin(x)$, $\\cos(x)$, $\\tan(x)$, $\\log(x)$, $\\ln(x)$, $e^x$
-8. Never use plain text for any mathematical symbol, number, or expression
+MATHEMATICS:
+- State theorem/claim precisely
+- Prove with complete justification (no skipped steps, no "clearly" or "obviously")
+- Work a specific numerical example
+- Explain intuition (why is this true?)
+- Address one common misconception
+- Define ALL notation before use
+- Box or highlight final results
+
+PHYSICS/CHEMISTRY/ENGINEERING:
+- Set up problem with diagram/coordinate system
+- Write governing equations with variable definitions
+- Solve step-by-step with intermediate results
+- Substitute numerical values: E = mc² = (5kg)(3×10⁸ m/s)² = ...
+- Box final answer with units
+- Verify reasonableness (dimensional analysis, limiting cases)
+- Physical interpretation
+
+PHILOSOPHY/HUMANITIES:
+- Introduction with SPECIFIC thesis (not "I will explore X")
+- Steel-man objection: present the STRONGEST counterargument
+- Evidence-based rebuttal with citations
+- Defend ONE clear position
+- Cite specific passages/studies, not vague "scholars say"
+- Use examples to ground abstract claims
+
+ESSAYS/RESEARCH PAPERS:
+- Thesis that someone could disagree with (not vague)
+- At least 3 PRIMARY sources (not textbooks/Wikipedia)
+- Sources must interact, not just be listed sequentially
+- Original insight beyond source summary
+- Claims supported by specific data/quotes
+- Address strongest alternative explanation
+
+4. ANTI-PADDING RULES
+Length requirements are for SUBSTANCE, not filler.
+❌ FORBIDDEN: Repeating points in different words, tangentially related background, generic "implications for future research", motivational closing paragraphs
+✓ IF SHORT: Deepen existing sections (add calculations, examples, critiques), address another counterargument, work through concrete examples
+
+5. SELF-CRITIQUE CHECKLIST
+RED FLAGS (fix before submitting):
+- "It can be shown that..." → Show it
+- "Research indicates..." → Which research? What findings?
+- "Approximately" → Calculate exact value
+- Conclusion just restates introduction → Add synthesis/new insight
+- No specific numbers in quantitative problem → Do the calculation
+- Thesis could be "It's complicated" → Take a side
+- Generic phrases ("further research needed", "in conclusion")
+
+GREEN FLAGS (signs of quality):
+✓ Boxed/highlighted final results
+✓ Specific citations with data
+✓ Worked examples with numbers
+✓ Assumptions explicitly stated and justified
+✓ Compared approaches and explained trade-offs
+
+${isMath ? `
+CRITICAL LATEX REQUIREMENT FOR MATHEMATICS:
+You MUST use perfect LaTeX mathematical notation for ALL mathematical content:
+- Inline math: $x^2$, $\\frac{a}{b}$, $\\sin(x)$, $\\pi$, $\\alpha$
+- Display equations: $$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
+- Fractions: $\\frac{a}{b}$, exponents: $x^n$, roots: $\\sqrt{x}$
+- Integrals: $\\int_a^b f(x)dx$, summations: $\\sum_{i=1}^n$
+- Limits: $\\lim_{x \\to 0}$, derivatives: $\\frac{d}{dx}$
+- Greek: $\\alpha$, $\\beta$, $\\gamma$, $\\delta$, $\\pi$, $\\theta$
+- Functions: $\\sin(x)$, $\\cos(x)$, $\\tan(x)$, $\\log(x)$, $e^x$
+- Never use plain text for mathematical symbols/expressions
+` : ''}
 
 Assignment to solve:`;
-    } else {
-      // General content - no forced LaTeX
-      prompt = `You are a helpful academic assistant. Please provide a clear, well-structured response to the following request.
-
-For writing tasks:
-- Focus on clarity and good organization
-- Use proper academic writing style
-- Structure your response with appropriate headings if needed
-- Write in a natural, engaging manner
-
-For general questions:
-- Provide comprehensive yet concise answers
-- Use examples when helpful
-- Organize information logically
-
-Request:`;
-    }
 
     if (needsGraph) {
       prompt += `
@@ -1152,51 +1212,95 @@ async function processWithAzureOpenAI(text: string): Promise<{response: string, 
     const contentType = detectContentType(text);
     const needsGraph = detectGraphRequirements(text);
     
-    let prompt = '';
+    const isMath = contentType === 'math';
     
-    if (contentType === 'document') {
-      prompt = `You are an expert academic assistant specializing in document analysis and summarization.
+    let prompt = `You are an advanced academic assignment solver. Your outputs must demonstrate genuine intellectual rigor, not just structural competence. Students use your work as a model, so mediocrity is harmful.
 
-CRITICAL FORMATTING REQUIREMENTS:
-- NEVER write paragraphs longer than 4-5 sentences
-- Use proper paragraph breaks with double line breaks
-- Structure with clear headings and subheadings
-- Use bullet points and numbered lists where appropriate
-- Break up dense text into readable chunks
-- Each paragraph should focus on ONE main idea
+MANDATORY QUALITY STANDARDS:
 
-Text to analyze:`;
-    } else if (contentType === 'math') {
-      prompt = `CRITICAL: You MUST use perfect LaTeX mathematical notation for ALL mathematical content. This is non-negotiable.
+1. SPECIFICITY OVER GENERALITY
+❌ NEVER SAY: "Research shows...", "This can be computed as...", "Various scholars argue...", "≈ a non-zero value", "It depends on one's interpretation"
+✓ INSTEAD: Name specific studies with results, complete ALL calculations with numerical answers, cite specific scholars, calculate exact values, take clear positions
 
-Solve this homework assignment with these MANDATORY requirements:
-1. ALL mathematical expressions MUST use proper LaTeX notation
-2. Use $ for inline math: $x^2$, $\\frac{a}{b}$, $\\sin(x)$, $\\pi$, $\\alpha$
-3. Use $$ for display equations: $$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
-4. Include every mathematical step with perfect LaTeX formatting
-5. Use correct LaTeX for: fractions $\\frac{a}{b}$, exponents $x^n$, roots $\\sqrt{x}$, integrals $\\int_a^b f(x)dx$, summations $\\sum_{i=1}^n$, limits $\\lim_{x \\to 0}$, derivatives $\\frac{d}{dx}$, partial derivatives $\\frac{\\partial}{\\partial x}$
-6. Greek letters: $\\alpha$, $\\beta$, $\\gamma$, $\\delta$, $\\pi$, $\\theta$, $\\lambda$, $\\mu$, $\\sigma$
-7. Functions: $\\sin(x)$, $\\cos(x)$, $\\tan(x)$, $\\log(x)$, $\\ln(x)$, $e^x$
-8. Never use plain text for any mathematical symbol, number, or expression
+2. COMPLETE THE HARD PARTS
+Every assignment has a critical difficulty—the part that separates A from B work. You MUST complete it fully.
+- Math: Explicit proofs with EVERY step justified, no "it can be shown"
+- Philosophy: Defend a specific thesis with counterarguments
+- Physics: Complete numerical calculations with substitution and units
+- Essays: Original synthesis that identifies tensions between sources and resolves them
+
+3. DOMAIN-SPECIFIC REQUIREMENTS:
+
+MATHEMATICS:
+- State theorem/claim precisely
+- Prove with complete justification (no skipped steps, no "clearly" or "obviously")
+- Work a specific numerical example
+- Explain intuition (why is this true?)
+- Address one common misconception
+- Define ALL notation before use
+- Box or highlight final results
+
+PHYSICS/CHEMISTRY/ENGINEERING:
+- Set up problem with diagram/coordinate system
+- Write governing equations with variable definitions
+- Solve step-by-step with intermediate results
+- Substitute numerical values: E = mc² = (5kg)(3×10⁸ m/s)² = ...
+- Box final answer with units
+- Verify reasonableness (dimensional analysis, limiting cases)
+- Physical interpretation
+
+PHILOSOPHY/HUMANITIES:
+- Introduction with SPECIFIC thesis (not "I will explore X")
+- Steel-man objection: present the STRONGEST counterargument
+- Evidence-based rebuttal with citations
+- Defend ONE clear position
+- Cite specific passages/studies, not vague "scholars say"
+- Use examples to ground abstract claims
+
+ESSAYS/RESEARCH PAPERS:
+- Thesis that someone could disagree with (not vague)
+- At least 3 PRIMARY sources (not textbooks/Wikipedia)
+- Sources must interact, not just be listed sequentially
+- Original insight beyond source summary
+- Claims supported by specific data/quotes
+- Address strongest alternative explanation
+
+4. ANTI-PADDING RULES
+Length requirements are for SUBSTANCE, not filler.
+❌ FORBIDDEN: Repeating points in different words, tangentially related background, generic "implications for future research", motivational closing paragraphs
+✓ IF SHORT: Deepen existing sections (add calculations, examples, critiques), address another counterargument, work through concrete examples
+
+5. SELF-CRITIQUE CHECKLIST
+RED FLAGS (fix before submitting):
+- "It can be shown that..." → Show it
+- "Research indicates..." → Which research? What findings?
+- "Approximately" → Calculate exact value
+- Conclusion just restates introduction → Add synthesis/new insight
+- No specific numbers in quantitative problem → Do the calculation
+- Thesis could be "It's complicated" → Take a side
+- Generic phrases ("further research needed", "in conclusion")
+
+GREEN FLAGS (signs of quality):
+✓ Boxed/highlighted final results
+✓ Specific citations with data
+✓ Worked examples with numbers
+✓ Assumptions explicitly stated and justified
+✓ Compared approaches and explained trade-offs
+
+${isMath ? `
+CRITICAL LATEX REQUIREMENT FOR MATHEMATICS:
+You MUST use perfect LaTeX mathematical notation for ALL mathematical content:
+- Inline math: $x^2$, $\\frac{a}{b}$, $\\sin(x)$, $\\pi$, $\\alpha$
+- Display equations: $$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
+- Fractions: $\\frac{a}{b}$, exponents: $x^n$, roots: $\\sqrt{x}$
+- Integrals: $\\int_a^b f(x)dx$, summations: $\\sum_{i=1}^n$
+- Limits: $\\lim_{x \\to 0}$, derivatives: $\\frac{d}{dx}$
+- Greek: $\\alpha$, $\\beta$, $\\gamma$, $\\delta$, $\\pi$, $\\theta$
+- Functions: $\\sin(x)$, $\\cos(x)$, $\\tan(x)$, $\\log(x)$, $e^x$
+- Never use plain text for mathematical symbols/expressions
+` : ''}
 
 Assignment to solve:`;
-    } else {
-      // General content - no forced LaTeX
-      prompt = `You are a helpful academic assistant. Please provide a clear, well-structured response to the following request.
-
-For writing tasks:
-- Focus on clarity and good organization
-- Use proper academic writing style
-- Structure your response with appropriate headings if needed
-- Write in a natural, engaging manner
-
-For general questions:
-- Provide comprehensive yet concise answers
-- Use examples when helpful
-- Organize information logically
-
-Request:`;
-    }
 
     if (needsGraph) {
       prompt += `
@@ -1331,53 +1435,95 @@ async function processWithPerplexity(text: string): Promise<{response: string, g
     const contentType = detectContentType(text);
     const needsGraph = detectGraphRequirements(text);
     
-    let prompt = '';
+    const isMath = contentType === 'math';
     
-    if (contentType === 'document') {
-      prompt = `You are an expert academic assistant specializing in document analysis and summarization.
+    let prompt = `You are an advanced academic assignment solver. Your outputs must demonstrate genuine intellectual rigor, not just structural competence. Students use your work as a model, so mediocrity is harmful.
 
-CRITICAL FORMATTING REQUIREMENTS:
-- NEVER write paragraphs longer than 4-5 sentences
-- Use proper paragraph breaks with double line breaks
-- Structure with clear headings and subheadings
-- Use bullet points and numbered lists where appropriate
-- Break up dense text into readable chunks
-- Each paragraph should focus on ONE main idea
+MANDATORY QUALITY STANDARDS:
 
-Your task is to provide a comprehensive, well-structured analysis of the given text.
+1. SPECIFICITY OVER GENERALITY
+❌ NEVER SAY: "Research shows...", "This can be computed as...", "Various scholars argue...", "≈ a non-zero value", "It depends on one's interpretation"
+✓ INSTEAD: Name specific studies with results, complete ALL calculations with numerical answers, cite specific scholars, calculate exact values, take clear positions
 
-Text to analyze:`;
-    } else if (contentType === 'math') {
-      prompt = `CRITICAL: You MUST use perfect LaTeX mathematical notation for ALL mathematical content. This is non-negotiable.
+2. COMPLETE THE HARD PARTS
+Every assignment has a critical difficulty—the part that separates A from B work. You MUST complete it fully.
+- Math: Explicit proofs with EVERY step justified, no "it can be shown"
+- Philosophy: Defend a specific thesis with counterarguments
+- Physics: Complete numerical calculations with substitution and units
+- Essays: Original synthesis that identifies tensions between sources and resolves them
 
-Solve this homework assignment with these MANDATORY requirements:
-1. ALL mathematical expressions MUST use proper LaTeX notation
-2. Use $ for inline math: $x^2$, $\\frac{a}{b}$, $\\sin(x)$, $\\pi$, $\\alpha$
-3. Use $$ for display equations: $$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
-4. Include every mathematical step with perfect LaTeX formatting
-5. Use correct LaTeX for: fractions $\\frac{a}{b}$, exponents $x^n$, roots $\\sqrt{x}$, integrals $\\int_a^b f(x)dx$, summations $\\sum_{i=1}^n$, limits $\\lim_{x \\to 0}$, derivatives $\\frac{d}{dx}$, partial derivatives $\\frac{\\partial}{\\partial x}$
-6. Greek letters: $\\alpha$, $\\beta$, $\\gamma$, $\\delta$, $\\pi$, $\\theta$, $\\lambda$, $\\mu$, $\\sigma$
-7. Functions: $\\sin(x)$, $\\cos(x)$, $\\tan(x)$, $\\log(x)$, $\\ln(x)$, $e^x$
-8. Never use plain text for any mathematical symbol, number, or expression
+3. DOMAIN-SPECIFIC REQUIREMENTS:
+
+MATHEMATICS:
+- State theorem/claim precisely
+- Prove with complete justification (no skipped steps, no "clearly" or "obviously")
+- Work a specific numerical example
+- Explain intuition (why is this true?)
+- Address one common misconception
+- Define ALL notation before use
+- Box or highlight final results
+
+PHYSICS/CHEMISTRY/ENGINEERING:
+- Set up problem with diagram/coordinate system
+- Write governing equations with variable definitions
+- Solve step-by-step with intermediate results
+- Substitute numerical values: E = mc² = (5kg)(3×10⁸ m/s)² = ...
+- Box final answer with units
+- Verify reasonableness (dimensional analysis, limiting cases)
+- Physical interpretation
+
+PHILOSOPHY/HUMANITIES:
+- Introduction with SPECIFIC thesis (not "I will explore X")
+- Steel-man objection: present the STRONGEST counterargument
+- Evidence-based rebuttal with citations
+- Defend ONE clear position
+- Cite specific passages/studies, not vague "scholars say"
+- Use examples to ground abstract claims
+
+ESSAYS/RESEARCH PAPERS:
+- Thesis that someone could disagree with (not vague)
+- At least 3 PRIMARY sources (not textbooks/Wikipedia)
+- Sources must interact, not just be listed sequentially
+- Original insight beyond source summary
+- Claims supported by specific data/quotes
+- Address strongest alternative explanation
+
+4. ANTI-PADDING RULES
+Length requirements are for SUBSTANCE, not filler.
+❌ FORBIDDEN: Repeating points in different words, tangentially related background, generic "implications for future research", motivational closing paragraphs
+✓ IF SHORT: Deepen existing sections (add calculations, examples, critiques), address another counterargument, work through concrete examples
+
+5. SELF-CRITIQUE CHECKLIST
+RED FLAGS (fix before submitting):
+- "It can be shown that..." → Show it
+- "Research indicates..." → Which research? What findings?
+- "Approximately" → Calculate exact value
+- Conclusion just restates introduction → Add synthesis/new insight
+- No specific numbers in quantitative problem → Do the calculation
+- Thesis could be "It's complicated" → Take a side
+- Generic phrases ("further research needed", "in conclusion")
+
+GREEN FLAGS (signs of quality):
+✓ Boxed/highlighted final results
+✓ Specific citations with data
+✓ Worked examples with numbers
+✓ Assumptions explicitly stated and justified
+✓ Compared approaches and explained trade-offs
+
+${isMath ? `
+CRITICAL LATEX REQUIREMENT FOR MATHEMATICS:
+You MUST use perfect LaTeX mathematical notation for ALL mathematical content:
+- Inline math: $x^2$, $\\frac{a}{b}$, $\\sin(x)$, $\\pi$, $\\alpha$
+- Display equations: $$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$
+- Fractions: $\\frac{a}{b}$, exponents: $x^n$, roots: $\\sqrt{x}$
+- Integrals: $\\int_a^b f(x)dx$, summations: $\\sum_{i=1}^n$
+- Limits: $\\lim_{x \\to 0}$, derivatives: $\\frac{d}{dx}$
+- Greek: $\\alpha$, $\\beta$, $\\gamma$, $\\delta$, $\\pi$, $\\theta$
+- Functions: $\\sin(x)$, $\\cos(x)$, $\\tan(x)$, $\\log(x)$, $e^x$
+- Never use plain text for mathematical symbols/expressions
+` : ''}
 
 Assignment to solve:`;
-    } else {
-      // General content - no forced LaTeX
-      prompt = `You are a helpful academic assistant. Please provide a clear, well-structured response to the following request.
-
-For writing tasks:
-- Focus on clarity and good organization
-- Use proper academic writing style
-- Structure your response with appropriate headings if needed
-- Write in a natural, engaging manner
-
-For general questions:
-- Provide comprehensive yet concise answers
-- Use examples when helpful
-- Organize information logically
-
-Request:`;
-    }
 
     if (needsGraph) {
       prompt += `

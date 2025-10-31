@@ -132,3 +132,21 @@ The application employs a clear client-server architecture.
   - Grade adjustment feature allows re-evaluation with options: higher, lower, appropriate, or complete re-evaluation
   - Route available at /grading path
   - Critical fix: Removed forced numeric conversion that was ignoring user's specified grading format
+
+### October 31, 2025
+- **COMPREHENSIVE SYSTEM PROMPT ENHANCEMENT - QUALITY REVOLUTION**: Replaced ALL LLM provider prompts with advanced academic rigor standards
+  - **Scope**: Updated all 5 providers (OpenAI/ZHI 2, Anthropic/ZHI 1, DeepSeek/ZHI 3, Azure, Perplexity) with identical quality framework
+  - **Core Philosophy**: "Your outputs must demonstrate genuine intellectual rigor, not just structural competence. Students use your work as a model, so mediocrity is harmful."
+  - **Mandatory Quality Standards Implemented**:
+    1. **Specificity Over Generality**: No vague claims - requires specific studies with results, complete calculations with numerical answers, named scholars, exact values, clear positions
+    2. **Complete the Hard Parts**: Must fully complete critical difficulty that separates A from B work (explicit proofs, numerical calculations with substitution, steel-man counterarguments, original synthesis)
+    3. **Domain-Specific Requirements**:
+       - **Mathematics**: Precise theorem statements, complete proofs with every step justified (no "clearly"/"obviously"), worked numerical examples, intuition explanations, address common misconceptions
+       - **Physics/Chemistry/Engineering**: Problem setup with diagrams, governing equations with definitions, step-by-step solutions, numerical substitution (E = mc² = (5kg)(3×10⁸ m/s)² = ...), boxed answers with units, dimensional analysis, physical interpretation
+       - **Philosophy/Humanities**: Specific thesis (not "I will explore"), steel-man strongest counterargument, evidence-based rebuttal, defend ONE clear position, specific citations (not vague "scholars say")
+       - **Essays/Research**: Debatable thesis, 3+ PRIMARY sources that interact (not just listed), original insight beyond summary, specific data/quotes, address alternative explanations
+    4. **Anti-Padding Rules**: Length requirements for SUBSTANCE not filler - forbidden tactics include repeating points, tangential background, generic "future research" sections
+    5. **Self-Critique Checklist**: Red flags ("it can be shown" → show it, "research indicates" → which research?, "approximately" → calculate exact value) and green flags (boxed results, specific citations, worked examples, stated assumptions)
+  - **Technical Requirements Preserved**: LaTeX notation for math (conditional based on content type), graph generation instructions, word count continuation logic
+  - **Implementation**: Unified prompt structure across all providers ensures consistent A+ quality output regardless of LLM choice
+  - **Impact**: Eliminates generic responses, forces complete calculations, requires specific evidence, ensures genuine academic rigor matching 90-100% quality standards
