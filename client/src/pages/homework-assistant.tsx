@@ -61,6 +61,15 @@ export default function HomeworkAssistant() {
   const [isAnalyzingSolution, setIsAnalyzingSolution] = useState(false);
   const [inputAiScore, setInputAiScore] = useState<number | null>(null);
   const [isAnalyzingInput, setIsAnalyzingInput] = useState(false);
+  
+  // Auto-Grader state
+  const [isGraderExpanded, setIsGraderExpanded] = useState(false);
+  const [graderAssignmentText, setGraderAssignmentText] = useState("");
+  const [graderSolutionText, setGraderSolutionText] = useState("");
+  const [isGrading, setIsGrading] = useState(false);
+  const [gradingResult, setGradingResult] = useState<any>(null);
+  const [isGeneratingPerfect, setIsGeneratingPerfect] = useState(false);
+  const [perfectAssignment, setPerfectAssignment] = useState<any>(null);
 
   // Authentication and session management
   const { user, isAuthenticated } = useAuth();
@@ -2216,10 +2225,428 @@ ${fullResponse.slice(-1000)}...`;
           </Card>
         </div>
 
+        {/* AUTO-GRADER SECTION */}
+        <div className="mt-8" data-testid="auto-grader-section">
+          <Card className="shadow-lg border-slate-200">
+            {/* Collapsed Header */}
+            <div 
+              className="p-6 bg-gradient-to-r from-purple-50 to-pink-50 cursor-pointer hover:from-purple-100 hover:to-pink-100 transition-colors duration-200 border-b border-slate-200"
+              onClick={() => setIsGraderExpanded(!isGraderExpanded)}
+              data-testid="button-toggle-grader"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="flex items-center">
+                    <span className="text-2xl mr-3">📊</span>
+                    <div>
+                      <h2 className="text-xl font-bold text-slate-900">Assignment Grader & Perfecter</h2>
+                      <p className="text-sm text-slate-700 mt-1">Evaluate your work, get detailed feedback, or generate the perfect version</p>
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-4"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsGraderExpanded(!isGraderExpanded);
+                  }}
+                >
+                  {isGraderExpanded ? (
+                    <>
+                      ▲ Collapse
+                    </>
+                  ) : (
+                    <>
+                      ▼ Expand
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
 
+            {/* Expanded Content */}
+            {isGraderExpanded && (
+              <div className="p-6 space-y-6 bg-gradient-to-b from-white to-slate-50">
+                {/* Assignment Input Area */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2 flex items-center">
+                    <span className="mr-2">📝</span>
+                    Assignment Requirements
+                  </label>
+                  <Textarea
+                    value={graderAssignmentText}
+                    onChange={(e) => setGraderAssignmentText(e.target.value)}
+                    placeholder="Paste or type assignment here..."
+                    className="min-h-[100px] font-mono text-sm"
+                    data-testid="textarea-grader-assignment"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => {
+                      const textToFill = inputText || currentResult?.extractedText || "";
+                      setGraderAssignmentText(textToFill);
+                      toast({
+                        title: "Auto-filled",
+                        description: "Assignment text copied from above",
+                      });
+                    }}
+                    data-testid="button-autofill-assignment"
+                  >
+                    <ArrowDown className="w-4 h-4 mr-2" />
+                    Auto-fill from above
+                  </Button>
+                </div>
+
+                {/* Solution Input Area */}
+                <div>
+                  <label className="block text-sm font-semibold text-slate-900 mb-2 flex items-center">
+                    <span className="mr-2">📄</span>
+                    Solution to Grade
+                  </label>
+                  <Textarea
+                    value={graderSolutionText}
+                    onChange={(e) => setGraderSolutionText(e.target.value)}
+                    placeholder="Paste solution here..."
+                    className="min-h-[200px] font-mono text-sm"
+                    data-testid="textarea-grader-solution"
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-2"
+                    onClick={() => {
+                      if (currentResult?.llmResponse) {
+                        setGraderSolutionText(currentResult.llmResponse);
+                        toast({
+                          title: "Auto-filled",
+                          description: "Solution copied from above",
+                        });
+                      } else {
+                        toast({
+                          title: "No solution available",
+                          description: "Generate a solution first",
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    data-testid="button-autofill-solution"
+                  >
+                    <ArrowDown className="w-4 h-4 mr-2" />
+                    Auto-fill from solution above
+                  </Button>
+                </div>
+
+                {/* Grade Button */}
+                <div className="pt-4 border-t border-slate-200">
+                  <Button
+                    onClick={async () => {
+                      setIsGrading(true);
+                      try {
+                        const response = await fetch('/api/grade', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            assignment: graderAssignmentText,
+                            solution: graderSolutionText,
+                            detail_level: 'standard',
+                            focus_areas: ['all']
+                          }),
+                        });
+
+                        if (!response.ok) {
+                          throw new Error('Grading failed');
+                        }
+
+                        const result = await response.json();
+                        setGradingResult(result);
+                        
+                        toast({
+                          title: "Grading complete",
+                          description: `Score: ${result.overall_score}/100 (${result.grade_letter})`,
+                        });
+                      } catch (error) {
+                        toast({
+                          title: "Grading failed",
+                          description: "Please try again",
+                          variant: "destructive",
+                        });
+                      } finally {
+                        setIsGrading(false);
+                      }
+                    }}
+                    disabled={isGrading || !graderAssignmentText.trim() || !graderSolutionText.trim()}
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    size="lg"
+                    data-testid="button-grade-work"
+                  >
+                    {isGrading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Grading with ZHI 2...
+                      </>
+                    ) : (
+                      <>
+                        🎯 Grade This Work
+                      </>
+                    )}
+                  </Button>
+                </div>
+
+                {/* Results Display */}
+                {gradingResult && (
+                  <div className="mt-6 space-y-6">
+                    {/* Overall Score */}
+                    <div className="p-8 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl text-center">
+                      <div className="text-sm font-semibold text-blue-700 uppercase tracking-wide mb-2">
+                        Overall Grade
+                      </div>
+                      <div className="text-5xl font-bold text-blue-900">
+                        {gradingResult.overall_score}/100
+                      </div>
+                      <div className="text-2xl font-semibold text-blue-700 mt-2">
+                        ({gradingResult.grade_letter})
+                      </div>
+                    </div>
+
+                    {/* Component Breakdown */}
+                    {gradingResult.component_scores && (
+                      <div className="p-6 bg-white border border-slate-200 rounded-lg">
+                        <h3 className="text-lg font-semibold text-slate-900 mb-4">Component Breakdown</h3>
+                        <div className="space-y-3">
+                          {Object.entries(gradingResult.component_scores).map(([key, value]: [string, any]) => (
+                            <div key={key} className="flex items-center justify-between p-3 bg-slate-50 rounded">
+                              <div className="flex-1">
+                                <div className="font-medium text-slate-900 capitalize">{key}</div>
+                                {value.justification && (
+                                  <div className="text-sm text-slate-600 mt-1">{value.justification}</div>
+                                )}
+                              </div>
+                              <div className="text-lg font-semibold text-slate-900 ml-4">
+                                {value.score}/{value.max}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Strengths */}
+                    {gradingResult.strengths && gradingResult.strengths.length > 0 && (
+                      <div className="p-6 bg-green-50 border border-green-200 rounded-lg">
+                        <h3 className="text-lg font-semibold text-green-900 mb-4 flex items-center">
+                          <CheckCircle className="w-5 h-5 mr-2" />
+                          Strengths ({gradingResult.strengths.length})
+                        </h3>
+                        <ul className="space-y-2">
+                          {gradingResult.strengths.map((strength: string, index: number) => (
+                            <li key={index} className="flex items-start text-sm text-green-900">
+                              <span className="mr-2">•</span>
+                              <span>{strength}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Weaknesses */}
+                    {gradingResult.weaknesses && gradingResult.weaknesses.length > 0 && (
+                      <div className="p-6 bg-red-50 border border-red-200 rounded-lg">
+                        <h3 className="text-lg font-semibold text-red-900 mb-4 flex items-center">
+                          ⚠️ Critical Weaknesses ({gradingResult.weaknesses.length})
+                        </h3>
+                        <div className="space-y-4">
+                          {gradingResult.weaknesses.map((weakness: any, index: number) => (
+                            <div key={index} className="p-4 bg-white rounded border border-red-200">
+                              <div className="flex items-start justify-between mb-2">
+                                <div className="font-semibold text-red-900">
+                                  {index + 1}. {weakness.category}
+                                </div>
+                                <Badge variant={weakness.severity === 'Major' ? 'destructive' : 'secondary'}>
+                                  {weakness.severity} - {weakness.points_lost} pts
+                                </Badge>
+                              </div>
+                              <div className="text-sm text-red-800 mb-2">
+                                <strong>Problem:</strong> {weakness.evidence}
+                              </div>
+                              <div className="text-sm text-green-800 bg-green-50 p-2 rounded">
+                                <strong>Fix:</strong> {weakness.fix}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Estimated Score After Fixes */}
+                    {gradingResult.estimated_score_after_fix && (
+                      <div className="p-4 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-lg text-center">
+                        <div className="text-sm font-semibold text-emerald-700 uppercase tracking-wide mb-1">
+                          Estimated Grade After Fixes
+                        </div>
+                        <div className="text-3xl font-bold text-emerald-900">
+                          {gradingResult.estimated_score_after_fix}/100
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <Button
+                        onClick={async () => {
+                          setIsGeneratingPerfect(true);
+                          try {
+                            const response = await fetch('/api/generate-perfect', {
+                              method: 'POST',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                assignment: graderAssignmentText,
+                                originalSolution: graderSolutionText,
+                                gradingReport: gradingResult
+                              }),
+                            });
+
+                            if (!response.ok) {
+                              throw new Error('Failed to generate perfect assignment');
+                            }
+
+                            const result = await response.json();
+                            setPerfectAssignment(result.perfectSolution);
+                            
+                            toast({
+                              title: "✨ Perfect Assignment Generated!",
+                              description: "Scroll down to see the perfected version (95-100% quality)",
+                            });
+                          } catch (error) {
+                            toast({
+                              title: "Generation failed",
+                              description: "Please try again",
+                              variant: "destructive",
+                            });
+                          } finally {
+                            setIsGeneratingPerfect(false);
+                          }
+                        }}
+                        disabled={isGeneratingPerfect}
+                        className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
+                        data-testid="button-generate-perfect"
+                      >
+                        {isGeneratingPerfect ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Generating Perfect Version...
+                          </>
+                        ) : (
+                          <>
+                            ✨ Generate Perfect Assignment
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          if (gradingResult.rewrite_instructions) {
+                            navigator.clipboard.writeText(gradingResult.rewrite_instructions);
+                            toast({
+                              title: "Copied",
+                              description: "Fix instructions copied to clipboard",
+                            });
+                          }
+                        }}
+                        data-testid="button-copy-fixes"
+                      >
+                        📋 Copy Fix Instructions
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          // Clear results and allow re-grading
+                          setGradingResult(null);
+                          toast({
+                            title: "Ready to re-grade",
+                            description: "Make your edits and grade again",
+                          });
+                        }}
+                        data-testid="button-regrade"
+                      >
+                        🔄 Re-grade After Edits
+                      </Button>
+                    </div>
+
+                    {/* Perfect Assignment Display */}
+                    {perfectAssignment && (
+                      <div className="mt-6 p-6 bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-300 rounded-xl">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-xl font-bold text-yellow-900 flex items-center">
+                            ✨ Perfect Assignment (95-100% Quality)
+                          </h3>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              navigator.clipboard.writeText(perfectAssignment);
+                              toast({
+                                title: "Copied!",
+                                description: "Perfect assignment copied to clipboard",
+                              });
+                            }}
+                            data-testid="button-copy-perfect"
+                          >
+                            📋 Copy
+                          </Button>
+                        </div>
+                        <div className="prose prose-sm max-w-none bg-white p-6 rounded-lg border border-yellow-200">
+                          {isMathViewEnabled ? (
+                            <MathJax>
+                              {perfectAssignment.split('\n').map((line: string, i: number) => (
+                                <div key={i}>{line || <br />}</div>
+                              ))}
+                            </MathJax>
+                          ) : (
+                            <div className="whitespace-pre-wrap font-mono text-sm">
+                              {perfectAssignment}
+                            </div>
+                          )}
+                        </div>
+                        <div className="mt-4 flex gap-3">
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              // Send to main solution area
+                              setLlmResponse(perfectAssignment);
+                              toast({
+                                title: "Perfect assignment loaded",
+                                description: "Now showing in main solution area",
+                              });
+                            }}
+                            data-testid="button-use-perfect"
+                          >
+                            📤 Use as Main Solution
+                          </Button>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              setPerfectAssignment(null);
+                            }}
+                            data-testid="button-clear-perfect"
+                          >
+                            🗑️ Clear
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </Card>
+        </div>
 
         {/* AI Chat Section */}
-        <div className="mt-8">
+        <div className="mt-8" data-testid="ai-chat-section">
           <Card className="flex flex-col shadow-lg border-slate-200">
             <div className="p-6 border-b border-slate-200 bg-gradient-to-r from-blue-50 to-indigo-50">
               <h2 className="text-xl font-bold text-slate-900 flex items-center">

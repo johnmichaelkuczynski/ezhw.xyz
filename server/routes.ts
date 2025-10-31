@@ -3092,6 +3092,252 @@ Respond with the refined solution only:`;
     }
   });
 
+  // Auto-Grader API Endpoint
+  app.post('/api/grade', async (req, res) => {
+    try {
+      const { assignment, solution, detail_level = 'standard', focus_areas = ['all'] } = req.body;
+      
+      if (!assignment || !solution) {
+        return res.status(400).json({ error: 'Assignment and solution text are required' });
+      }
+
+      // Build grading prompt
+      const gradingPrompt = `You are an expert academic grader evaluating a student assignment.
+
+ASSIGNMENT REQUIREMENTS:
+${assignment}
+
+STUDENT SOLUTION:
+${solution}
+
+GRADING RUBRIC:
+
+## COMPLETENESS (30 points)
+Does the solution address ALL required components?
+- Identify required components from assignment
+- Check if each component is present and adequately addressed
+- Deduct points for missing or incomplete components
+
+## RIGOR (25 points)
+Are claims supported with evidence?
+- Mathematical derivations: Complete with all steps? (Y/N)
+- Empirical evidence: Specific studies with N, results, effect sizes? (Y/N)
+- Theory: Formal models stated and distinguished? (Y/N)
+- Are assertions backed by specific evidence or just claims?
+
+## DEPTH (25 points)
+Does it engage with difficult parts or evade them?
+- Are hard questions addressed or glossed over?
+- Are counterarguments steel-manned or straw-manned?
+- Is there original synthesis or just source summary?
+- Does it tackle the intellectually demanding aspects?
+
+## DISCIPLINE (20 points)
+Does it stay on topic?
+- Count actual vs required words (if specified)
+- Identify any padding: repetitive content, tangential sections, generic filler
+- Check for off-topic content (e.g., unrelated applications, "future directions" not requested)
+- Evaluate focus and relevance throughout
+
+## MECHANICS (10 points)
+- Formatting correct? (Y/N)
+- Citations present and proper? (Y/N)
+- Grammar/spelling acceptable? (Y/N)
+
+---
+
+DETAIL LEVEL: ${detail_level.toUpperCase()}
+
+${detail_level === 'brief' ? `
+OUTPUT REQUIRED (Brief format):
+Provide a concise JSON response with:
+- Overall score and grade
+- 3-5 key strengths (bullet points only)
+- Top 3-4 weaknesses (category + brief description)
+- Quick fix suggestions
+` : detail_level === 'comprehensive' ? `
+OUTPUT REQUIRED (Comprehensive format):
+Provide a detailed JSON response with:
+- Full component breakdown with justifications
+- All strengths with quotes from solution
+- All weaknesses ranked by severity with evidence
+- Paragraph-by-paragraph critique for major issues
+- Detailed rewrite plan with example corrections
+` : `
+OUTPUT REQUIRED (Standard format):
+Provide a balanced JSON response with:
+- Component scores with justifications
+- 3-5 strengths with specific evidence
+- Top 4-6 weaknesses with evidence and specific fixes
+- Clear rewrite instructions
+`}
+
+CRITICAL: You MUST respond with ONLY valid JSON in exactly this format (no markdown, no code blocks, no additional text):
+
+{
+  "overall_score": [0-100],
+  "grade_letter": "[A+ through F]",
+  "component_scores": {
+    "completeness": {"score": X, "max": 30, "justification": "..."},
+    "rigor": {"score": X, "max": 25, "justification": "..."},
+    "depth": {"score": X, "max": 25, "justification": "..."},
+    "discipline": {"score": X, "max": 20, "justification": "..."},
+    "mechanics": {"score": X, "max": 10, "justification": "..."}
+  },
+  "strengths": [
+    "Specific strength with evidence from solution"
+  ],
+  "weaknesses": [
+    {
+      "category": "DESCRIPTIVE_NAME",
+      "severity": "Major|Minor",
+      "points_lost": X,
+      "evidence": "Quote or description from solution",
+      "fix": "Specific, actionable instruction"
+    }
+  ],
+  "estimated_score_after_fix": [0-100],
+  "rewrite_instructions": "Numbered list of all fixes needed:\\n1. Fix X by doing Y\\n2. Add Z to section A\\n3. Remove padding from pages B-C"
+}
+
+IMPORTANT: Return ONLY the JSON object. Do not include any markdown formatting, code blocks, or explanatory text.`;
+
+      // Call OpenAI for grading
+      if (!openai) {
+        throw new Error('OpenAI not configured');
+      }
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: 'You are an expert academic grader. You MUST respond with valid JSON only.' },
+          { role: 'user', content: gradingPrompt }
+        ],
+        temperature: 0.3,
+        response_format: { type: "json_object" }
+      });
+
+      const gradingResultText = completion.choices[0]?.message?.content;
+      
+      if (!gradingResultText) {
+        throw new Error('No grading result from OpenAI');
+      }
+
+      // Parse JSON response
+      const gradingResult = JSON.parse(gradingResultText);
+
+      // Return grading report
+      res.json(gradingResult);
+
+    } catch (error) {
+      console.error('Grading error:', error);
+      res.status(500).json({ 
+        error: 'Failed to grade assignment',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Generate Perfect Assignment API Endpoint
+  app.post('/api/generate-perfect', async (req, res) => {
+    try {
+      const { assignment, originalSolution, gradingReport } = req.body;
+      
+      if (!assignment || !originalSolution || !gradingReport) {
+        return res.status(400).json({ error: 'Assignment, original solution, and grading report are required' });
+      }
+
+      // Build perfection prompt using the grading report
+      const perfectionPrompt = `You are an expert academic writer tasked with creating a PERFECT version of a student assignment based on detailed grading feedback.
+
+ORIGINAL ASSIGNMENT PROMPT:
+${assignment}
+
+STUDENT'S ORIGINAL SUBMISSION:
+${originalSolution}
+
+GRADING REPORT:
+- Overall Score: ${gradingReport.overall_score}/100 (${gradingReport.grade_letter})
+- Component Scores:
+${Object.entries(gradingReport.component_scores || {}).map(([key, value]: [string, any]) => 
+  `  * ${key}: ${value.score}/${value.max} - ${value.justification}`
+).join('\n')}
+
+IDENTIFIED WEAKNESSES:
+${(gradingReport.weaknesses || []).map((w: any, i: number) => 
+  `${i + 1}. [${w.severity}] ${w.category} (-${w.points_lost} pts)
+   Problem: ${w.evidence}
+   Fix Required: ${w.fix}`
+).join('\n\n')}
+
+REWRITE INSTRUCTIONS:
+${gradingReport.rewrite_instructions}
+
+---
+
+YOUR TASK:
+Generate a PERFECT version of this assignment that would score 95-100/100. This perfected version must:
+
+1. **Address ALL identified weaknesses** - Implement every fix from the grading report
+2. **Preserve all strengths** - Keep what worked well in the original
+3. **Meet ALL assignment requirements** - Ensure complete coverage of the prompt
+4. **Achieve academic excellence** - Demonstrate A+ level rigor, depth, and discipline
+5. **Maintain proper mechanics** - Perfect formatting, citations, grammar
+
+CRITICAL QUALITY STANDARDS:
+- **Rigor**: Support ALL claims with specific evidence (studies with N, results, effect sizes for empirical claims; complete derivations for math)
+- **Depth**: Engage directly with difficult questions, steel-man counterarguments, provide original synthesis
+- **Discipline**: Stay strictly on topic, meet exact word/page count if specified, eliminate all padding
+- **Completeness**: Address every single component of the assignment requirements
+- **Mechanics**: Perfect formatting, proper citations, flawless grammar
+
+OUTPUT FORMAT:
+Return ONLY the perfected assignment text. Do not include:
+- Meta-commentary about changes made
+- Explanations of improvements
+- Grading analysis
+- Section headers like "Perfected Version:"
+
+Just provide the final, polished, A+ quality assignment that a student could submit directly.`;
+
+      // Call OpenAI for perfection generation
+      if (!openai) {
+        throw new Error('OpenAI not configured');
+      }
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { 
+            role: 'system', 
+            content: 'You are an expert academic writer. Generate only the final perfected assignment text without any meta-commentary.' 
+          },
+          { role: 'user', content: perfectionPrompt }
+        ],
+        temperature: 0.7,
+      });
+
+      const perfectSolution = completion.choices[0]?.message?.content;
+      
+      if (!perfectSolution) {
+        throw new Error('No perfected solution from OpenAI');
+      }
+
+      // Return the perfected assignment
+      res.json({ 
+        perfectSolution,
+        message: 'Perfect assignment generated successfully'
+      });
+
+    } catch (error) {
+      console.error('Generate perfect error:', error);
+      res.status(500).json({ 
+        error: 'Failed to generate perfect assignment',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Text processing endpoint with token management
   app.post("/api/process-text", async (req, res) => {
     try {
