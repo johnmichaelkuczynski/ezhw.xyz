@@ -1325,9 +1325,8 @@ ${fullResponse.slice(-1000)}...`;
   const handleCopyToClipboard = () => {
     if (!currentResult) return;
     
-    const textToCopy = `${currentAssignmentName ? `Assignment: ${currentAssignmentName}\n\n` : ''}${
-      currentResult.extractedText ? `Problem: ${currentResult.extractedText}\n\n` : ''
-    }Solution:\n${currentResult.llmResponse}`;
+    // Copy ONLY the solution, not the assignment or problem
+    const textToCopy = currentResult.llmResponse;
     
     navigator.clipboard.writeText(textToCopy);
     toast({
