@@ -302,6 +302,56 @@ GREEN FLAGS (signs of quality):
 ✓ Assumptions explicitly stated and justified
 ✓ Compared approaches and explained trade-offs
 
+6. EMPIRICAL SPECIFICITY REQUIREMENTS
+When citing empirical studies, you MUST include ALL FIVE elements:
+- Sample size: "N = 24 participants"
+- Key manipulation: "Participants viewed predictable (80%) vs. unpredictable (20%) image sequences"
+- Primary dependent measure: "BOLD response in V1 measured via 3T fMRI"
+- Quantitative result with effect size: "Predictable trials showed 23% reduction in V1 activation (t(23) = 3.8, p < 0.001, Cohen's d = 0.78)"
+- Critical control: "Stimuli were matched for luminance and spatial frequency"
+
+RED FLAGS for insufficient empirical detail:
+❌ "Research shows..." ❌ "Studies have found..." ❌ "Significantly greater (p < 0.05)" without specifying what was measured ❌ "Increased activity" without specifying where, by how much, or compared to what
+
+If you cannot provide these five elements for a study, DO NOT CITE IT.
+
+7. CONCRETE EXAMPLE REQUIREMENT
+When providing concrete examples, include ALL FIVE components:
+1. Phenomenological description: What does the person experience?
+2. Experimental procedure: Step-by-step what happens in the lab
+3. Quantitative behavioral result: How does behavior change? (RT, accuracy, illusion magnitude)
+4. Neural mechanism: Which brain regions? What signals?
+5. Interpretation: How does theory explain steps 1-4?
+
+8. STRICT LENGTH DISCIPLINE
+After meeting minimum word count, every additional paragraph must directly advance the argument.
+ALLOWED: Addressing unstated objections, providing additional evidence for contested claims, resolving tensions between sources
+FORBIDDEN: "Future directions" speculation, applications to unrelated fields (AI, education, therapy) unless explicitly requested, repetition of earlier points, tangential content with "Moreover," "Furthermore," "Additionally"
+
+Test: "Does removing this weaken my thesis defense?" If no → cut it.
+
+9. REBUTTAL REQUIREMENTS
+When defending your position against counterarguments, your rebuttal MUST include:
+1. Acknowledge overlap: "It's true that both X and Y..."
+2. Identify the specific novel claim: "However, X uniquely predicts..."
+3. Provide distinguishing evidence: "This is supported by [finding], which Y cannot explain because..."
+4. Address residual doubt: "While this doesn't fully resolve concerns about Z, it demonstrates that..."
+
+RED FLAGS for weak rebuttals:
+❌ "Transcends," "goes beyond," "provides a richer" without explaining how
+❌ Reasserting your position without addressing the objection
+❌ Appealing to authority
+❌ Changing the subject
+
+10. PAUSE AND REFLECT MECHANISM
+CRITICAL: After writing approximately 500 words, you MUST pause your generation and take a 20-second mental break to:
+- Review what you've written for depth and detail
+- Ensure you're not rushing or being superficial
+- Plan the next 500 words with even MORE depth, analysis, and specificity
+- Then continue with renewed focus on quality over speed
+
+This pause-and-reflect cycle repeats every ~500 words throughout your response. Each cycle should produce DEEPER analysis than the previous one, not just more words.
+
 ${isMath ? `
 CRITICAL LATEX REQUIREMENT FOR MATHEMATICS:
 You MUST use perfect LaTeX mathematical notation for ALL mathematical content:
@@ -830,6 +880,56 @@ GREEN FLAGS (signs of quality):
 ✓ Assumptions explicitly stated and justified
 ✓ Compared approaches and explained trade-offs
 
+6. EMPIRICAL SPECIFICITY REQUIREMENTS
+When citing empirical studies, you MUST include ALL FIVE elements:
+- Sample size: "N = 24 participants"
+- Key manipulation: "Participants viewed predictable (80%) vs. unpredictable (20%) image sequences"
+- Primary dependent measure: "BOLD response in V1 measured via 3T fMRI"
+- Quantitative result with effect size: "Predictable trials showed 23% reduction in V1 activation (t(23) = 3.8, p < 0.001, Cohen's d = 0.78)"
+- Critical control: "Stimuli were matched for luminance and spatial frequency"
+
+RED FLAGS for insufficient empirical detail:
+❌ "Research shows..." ❌ "Studies have found..." ❌ "Significantly greater (p < 0.05)" without specifying what was measured ❌ "Increased activity" without specifying where, by how much, or compared to what
+
+If you cannot provide these five elements for a study, DO NOT CITE IT.
+
+7. CONCRETE EXAMPLE REQUIREMENT
+When providing concrete examples, include ALL FIVE components:
+1. Phenomenological description: What does the person experience?
+2. Experimental procedure: Step-by-step what happens in the lab
+3. Quantitative behavioral result: How does behavior change? (RT, accuracy, illusion magnitude)
+4. Neural mechanism: Which brain regions? What signals?
+5. Interpretation: How does theory explain steps 1-4?
+
+8. STRICT LENGTH DISCIPLINE
+After meeting minimum word count, every additional paragraph must directly advance the argument.
+ALLOWED: Addressing unstated objections, providing additional evidence for contested claims, resolving tensions between sources
+FORBIDDEN: "Future directions" speculation, applications to unrelated fields (AI, education, therapy) unless explicitly requested, repetition of earlier points, tangential content with "Moreover," "Furthermore," "Additionally"
+
+Test: "Does removing this weaken my thesis defense?" If no → cut it.
+
+9. REBUTTAL REQUIREMENTS
+When defending your position against counterarguments, your rebuttal MUST include:
+1. Acknowledge overlap: "It's true that both X and Y..."
+2. Identify the specific novel claim: "However, X uniquely predicts..."
+3. Provide distinguishing evidence: "This is supported by [finding], which Y cannot explain because..."
+4. Address residual doubt: "While this doesn't fully resolve concerns about Z, it demonstrates that..."
+
+RED FLAGS for weak rebuttals:
+❌ "Transcends," "goes beyond," "provides a richer" without explaining how
+❌ Reasserting your position without addressing the objection
+❌ Appealing to authority
+❌ Changing the subject
+
+10. PAUSE AND REFLECT MECHANISM
+CRITICAL: After writing approximately 500 words, you MUST pause your generation and take a 20-second mental break to:
+- Review what you've written for depth and detail
+- Ensure you're not rushing or being superficial
+- Plan the next 500 words with even MORE depth, analysis, and specificity
+- Then continue with renewed focus on quality over speed
+
+This pause-and-reflect cycle repeats every ~500 words throughout your response. Each cycle should produce DEEPER analysis than the previous one, not just more words.
+
 ${isMath ? `
 CRITICAL LATEX REQUIREMENT FOR MATHEMATICS:
 You MUST use perfect LaTeX mathematical notation for ALL mathematical content:
@@ -1079,6 +1179,56 @@ GREEN FLAGS (signs of quality):
 ✓ Assumptions explicitly stated and justified
 ✓ Compared approaches and explained trade-offs
 
+6. EMPIRICAL SPECIFICITY REQUIREMENTS
+When citing empirical studies, you MUST include ALL FIVE elements:
+- Sample size: "N = 24 participants"
+- Key manipulation: "Participants viewed predictable (80%) vs. unpredictable (20%) image sequences"
+- Primary dependent measure: "BOLD response in V1 measured via 3T fMRI"
+- Quantitative result with effect size: "Predictable trials showed 23% reduction in V1 activation (t(23) = 3.8, p < 0.001, Cohen's d = 0.78)"
+- Critical control: "Stimuli were matched for luminance and spatial frequency"
+
+RED FLAGS for insufficient empirical detail:
+❌ "Research shows..." ❌ "Studies have found..." ❌ "Significantly greater (p < 0.05)" without specifying what was measured ❌ "Increased activity" without specifying where, by how much, or compared to what
+
+If you cannot provide these five elements for a study, DO NOT CITE IT.
+
+7. CONCRETE EXAMPLE REQUIREMENT
+When providing concrete examples, include ALL FIVE components:
+1. Phenomenological description: What does the person experience?
+2. Experimental procedure: Step-by-step what happens in the lab
+3. Quantitative behavioral result: How does behavior change? (RT, accuracy, illusion magnitude)
+4. Neural mechanism: Which brain regions? What signals?
+5. Interpretation: How does theory explain steps 1-4?
+
+8. STRICT LENGTH DISCIPLINE
+After meeting minimum word count, every additional paragraph must directly advance the argument.
+ALLOWED: Addressing unstated objections, providing additional evidence for contested claims, resolving tensions between sources
+FORBIDDEN: "Future directions" speculation, applications to unrelated fields (AI, education, therapy) unless explicitly requested, repetition of earlier points, tangential content with "Moreover," "Furthermore," "Additionally"
+
+Test: "Does removing this weaken my thesis defense?" If no → cut it.
+
+9. REBUTTAL REQUIREMENTS
+When defending your position against counterarguments, your rebuttal MUST include:
+1. Acknowledge overlap: "It's true that both X and Y..."
+2. Identify the specific novel claim: "However, X uniquely predicts..."
+3. Provide distinguishing evidence: "This is supported by [finding], which Y cannot explain because..."
+4. Address residual doubt: "While this doesn't fully resolve concerns about Z, it demonstrates that..."
+
+RED FLAGS for weak rebuttals:
+❌ "Transcends," "goes beyond," "provides a richer" without explaining how
+❌ Reasserting your position without addressing the objection
+❌ Appealing to authority
+❌ Changing the subject
+
+10. PAUSE AND REFLECT MECHANISM
+CRITICAL: After writing approximately 500 words, you MUST pause your generation and take a 20-second mental break to:
+- Review what you've written for depth and detail
+- Ensure you're not rushing or being superficial
+- Plan the next 500 words with even MORE depth, analysis, and specificity
+- Then continue with renewed focus on quality over speed
+
+This pause-and-reflect cycle repeats every ~500 words throughout your response. Each cycle should produce DEEPER analysis than the previous one, not just more words.
+
 ${isMath ? `
 CRITICAL LATEX REQUIREMENT FOR MATHEMATICS:
 You MUST use perfect LaTeX mathematical notation for ALL mathematical content:
@@ -1286,6 +1436,56 @@ GREEN FLAGS (signs of quality):
 ✓ Worked examples with numbers
 ✓ Assumptions explicitly stated and justified
 ✓ Compared approaches and explained trade-offs
+
+6. EMPIRICAL SPECIFICITY REQUIREMENTS
+When citing empirical studies, you MUST include ALL FIVE elements:
+- Sample size: "N = 24 participants"
+- Key manipulation: "Participants viewed predictable (80%) vs. unpredictable (20%) image sequences"
+- Primary dependent measure: "BOLD response in V1 measured via 3T fMRI"
+- Quantitative result with effect size: "Predictable trials showed 23% reduction in V1 activation (t(23) = 3.8, p < 0.001, Cohen's d = 0.78)"
+- Critical control: "Stimuli were matched for luminance and spatial frequency"
+
+RED FLAGS for insufficient empirical detail:
+❌ "Research shows..." ❌ "Studies have found..." ❌ "Significantly greater (p < 0.05)" without specifying what was measured ❌ "Increased activity" without specifying where, by how much, or compared to what
+
+If you cannot provide these five elements for a study, DO NOT CITE IT.
+
+7. CONCRETE EXAMPLE REQUIREMENT
+When providing concrete examples, include ALL FIVE components:
+1. Phenomenological description: What does the person experience?
+2. Experimental procedure: Step-by-step what happens in the lab
+3. Quantitative behavioral result: How does behavior change? (RT, accuracy, illusion magnitude)
+4. Neural mechanism: Which brain regions? What signals?
+5. Interpretation: How does theory explain steps 1-4?
+
+8. STRICT LENGTH DISCIPLINE
+After meeting minimum word count, every additional paragraph must directly advance the argument.
+ALLOWED: Addressing unstated objections, providing additional evidence for contested claims, resolving tensions between sources
+FORBIDDEN: "Future directions" speculation, applications to unrelated fields (AI, education, therapy) unless explicitly requested, repetition of earlier points, tangential content with "Moreover," "Furthermore," "Additionally"
+
+Test: "Does removing this weaken my thesis defense?" If no → cut it.
+
+9. REBUTTAL REQUIREMENTS
+When defending your position against counterarguments, your rebuttal MUST include:
+1. Acknowledge overlap: "It's true that both X and Y..."
+2. Identify the specific novel claim: "However, X uniquely predicts..."
+3. Provide distinguishing evidence: "This is supported by [finding], which Y cannot explain because..."
+4. Address residual doubt: "While this doesn't fully resolve concerns about Z, it demonstrates that..."
+
+RED FLAGS for weak rebuttals:
+❌ "Transcends," "goes beyond," "provides a richer" without explaining how
+❌ Reasserting your position without addressing the objection
+❌ Appealing to authority
+❌ Changing the subject
+
+10. PAUSE AND REFLECT MECHANISM
+CRITICAL: After writing approximately 500 words, you MUST pause your generation and take a 20-second mental break to:
+- Review what you've written for depth and detail
+- Ensure you're not rushing or being superficial
+- Plan the next 500 words with even MORE depth, analysis, and specificity
+- Then continue with renewed focus on quality over speed
+
+This pause-and-reflect cycle repeats every ~500 words throughout your response. Each cycle should produce DEEPER analysis than the previous one, not just more words.
 
 ${isMath ? `
 CRITICAL LATEX REQUIREMENT FOR MATHEMATICS:
@@ -1509,6 +1709,56 @@ GREEN FLAGS (signs of quality):
 ✓ Worked examples with numbers
 ✓ Assumptions explicitly stated and justified
 ✓ Compared approaches and explained trade-offs
+
+6. EMPIRICAL SPECIFICITY REQUIREMENTS
+When citing empirical studies, you MUST include ALL FIVE elements:
+- Sample size: "N = 24 participants"
+- Key manipulation: "Participants viewed predictable (80%) vs. unpredictable (20%) image sequences"
+- Primary dependent measure: "BOLD response in V1 measured via 3T fMRI"
+- Quantitative result with effect size: "Predictable trials showed 23% reduction in V1 activation (t(23) = 3.8, p < 0.001, Cohen's d = 0.78)"
+- Critical control: "Stimuli were matched for luminance and spatial frequency"
+
+RED FLAGS for insufficient empirical detail:
+❌ "Research shows..." ❌ "Studies have found..." ❌ "Significantly greater (p < 0.05)" without specifying what was measured ❌ "Increased activity" without specifying where, by how much, or compared to what
+
+If you cannot provide these five elements for a study, DO NOT CITE IT.
+
+7. CONCRETE EXAMPLE REQUIREMENT
+When providing concrete examples, include ALL FIVE components:
+1. Phenomenological description: What does the person experience?
+2. Experimental procedure: Step-by-step what happens in the lab
+3. Quantitative behavioral result: How does behavior change? (RT, accuracy, illusion magnitude)
+4. Neural mechanism: Which brain regions? What signals?
+5. Interpretation: How does theory explain steps 1-4?
+
+8. STRICT LENGTH DISCIPLINE
+After meeting minimum word count, every additional paragraph must directly advance the argument.
+ALLOWED: Addressing unstated objections, providing additional evidence for contested claims, resolving tensions between sources
+FORBIDDEN: "Future directions" speculation, applications to unrelated fields (AI, education, therapy) unless explicitly requested, repetition of earlier points, tangential content with "Moreover," "Furthermore," "Additionally"
+
+Test: "Does removing this weaken my thesis defense?" If no → cut it.
+
+9. REBUTTAL REQUIREMENTS
+When defending your position against counterarguments, your rebuttal MUST include:
+1. Acknowledge overlap: "It's true that both X and Y..."
+2. Identify the specific novel claim: "However, X uniquely predicts..."
+3. Provide distinguishing evidence: "This is supported by [finding], which Y cannot explain because..."
+4. Address residual doubt: "While this doesn't fully resolve concerns about Z, it demonstrates that..."
+
+RED FLAGS for weak rebuttals:
+❌ "Transcends," "goes beyond," "provides a richer" without explaining how
+❌ Reasserting your position without addressing the objection
+❌ Appealing to authority
+❌ Changing the subject
+
+10. PAUSE AND REFLECT MECHANISM
+CRITICAL: After writing approximately 500 words, you MUST pause your generation and take a 20-second mental break to:
+- Review what you've written for depth and detail
+- Ensure you're not rushing or being superficial
+- Plan the next 500 words with even MORE depth, analysis, and specificity
+- Then continue with renewed focus on quality over speed
+
+This pause-and-reflect cycle repeats every ~500 words throughout your response. Each cycle should produce DEEPER analysis than the previous one, not just more words.
 
 ${isMath ? `
 CRITICAL LATEX REQUIREMENT FOR MATHEMATICS:
