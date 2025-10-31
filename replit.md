@@ -7,8 +7,16 @@ EZHW (formerly Homework Assistant) is a full-stack web application designed to p
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
-Username jmkuczynski: Unlimited access with 99,999,999 tokens (maximum credits) - no password required.
-Username randyjohnson: Unlimited access with 99,999,999 tokens (maximum credits) - no password required.
+
+### Testing Mode Active
+**PAYWALL DISABLED FOR TESTING**
+- All new users automatically receive 99,999,999 tokens (unlimited credits)
+- Token balance checks are disabled - no payment required
+- Token deduction is disabled - usage doesn't consume credits
+- Payment gateways (PayPal/Stripe) remain functional but not required for testing
+- Special users (jmkuczynski, randyjohnson) retain unlimited access with no password
+
+To re-enable paywall: Uncomment token check and deduction code in server/routes.ts and change initial token balance in server/auth.ts back to 0.
 
 ## System Architecture
 
