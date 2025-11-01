@@ -2271,73 +2271,85 @@ ${fullResponse.slice(-1000)}...`;
               <div className="p-6 space-y-6 bg-gradient-to-b from-white to-slate-50">
                 {/* Assignment Input Area */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2 flex items-center">
-                    <span className="mr-2">📝</span>
-                    Assignment Requirements
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 flex items-center">
+                      <span className="mr-2">📝</span>
+                      Assignment Requirements
+                    </label>
+                    <Button
+                      variant="default"
+                      size="lg"
+                      className="bg-green-600 hover:bg-green-700"
+                      onClick={() => {
+                        const textToFill = inputText || currentResult?.extractedText || "";
+                        if (textToFill) {
+                          setGraderAssignmentText(textToFill);
+                          toast({
+                            title: "✅ Assignment Auto-filled!",
+                            description: "Assignment text copied from main input area above",
+                          });
+                        } else {
+                          toast({
+                            title: "Nothing to copy",
+                            description: "Enter assignment text in the main input area first",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                      data-testid="button-autofill-assignment"
+                    >
+                      <ArrowDown className="w-5 h-5 mr-2" />
+                      ⬇️ COPY ASSIGNMENT FROM ABOVE
+                    </Button>
+                  </div>
                   <Textarea
                     value={graderAssignmentText}
                     onChange={(e) => setGraderAssignmentText(e.target.value)}
-                    placeholder="Paste or type assignment here..."
+                    placeholder="Click 'COPY ASSIGNMENT FROM ABOVE' button or paste assignment here..."
                     className="min-h-[100px] font-mono text-sm"
                     data-testid="textarea-grader-assignment"
                   />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => {
-                      const textToFill = inputText || currentResult?.extractedText || "";
-                      setGraderAssignmentText(textToFill);
-                      toast({
-                        title: "Auto-filled",
-                        description: "Assignment text copied from above",
-                      });
-                    }}
-                    data-testid="button-autofill-assignment"
-                  >
-                    <ArrowDown className="w-4 h-4 mr-2" />
-                    Auto-fill from above
-                  </Button>
                 </div>
 
                 {/* Solution Input Area */}
                 <div>
-                  <label className="block text-sm font-semibold text-slate-900 mb-2 flex items-center">
-                    <span className="mr-2">📄</span>
-                    Solution to Grade
-                  </label>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-semibold text-slate-900 flex items-center">
+                      <span className="mr-2">📄</span>
+                      Solution to Grade
+                    </label>
+                    <Button
+                      variant="default"
+                      size="lg"
+                      className="bg-blue-600 hover:bg-blue-700"
+                      onClick={() => {
+                        if (currentResult?.llmResponse) {
+                          setGraderSolutionText(currentResult.llmResponse);
+                          toast({
+                            title: "✅ Solution Auto-filled!",
+                            description: "Solution copied from generated answer above",
+                          });
+                        } else {
+                          toast({
+                            title: "No solution available",
+                            description: "Generate a solution first using 'Solve This Problem' button",
+                            variant: "destructive",
+                          });
+                        }
+                      }}
+                      data-testid="button-autofill-solution"
+                    >
+                      <ArrowDown className="w-5 h-5 mr-2" />
+                      ⬇️ COPY SOLUTION FROM ABOVE
+                    </Button>
+                  </div>
                   <Textarea
                     value={graderSolutionText}
                     onChange={(e) => setGraderSolutionText(e.target.value)}
-                    placeholder="Paste solution here..."
+                    placeholder="Click 'COPY SOLUTION FROM ABOVE' button or paste solution here..."
                     className="min-h-[200px] font-mono text-sm"
                     data-testid="textarea-grader-solution"
                   />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-2"
-                    onClick={() => {
-                      if (currentResult?.llmResponse) {
-                        setGraderSolutionText(currentResult.llmResponse);
-                        toast({
-                          title: "Auto-filled",
-                          description: "Solution copied from above",
-                        });
-                      } else {
-                        toast({
-                          title: "No solution available",
-                          description: "Generate a solution first",
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                    data-testid="button-autofill-solution"
-                  >
-                    <ArrowDown className="w-4 h-4 mr-2" />
-                    Auto-fill from solution above
-                  </Button>
                 </div>
 
                 {/* Grade Button */}
