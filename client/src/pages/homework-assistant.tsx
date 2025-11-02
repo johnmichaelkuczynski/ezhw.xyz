@@ -1314,7 +1314,7 @@ ${fullResponse.slice(-1000)}...`;
     <div class="section">
         <h2>Solution:</h2>
         ${currentResult.graphImages && currentResult.graphImages.length > 0 ? 
-          currentResult.graphImages.map(img => 
+          currentResult.graphImages.map((img: string) => 
             `<div style="text-align: center; margin: 20px 0;"><img src="data:image/png;base64,${img}" alt="Generated Graph" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; page-break-inside: avoid;" /></div>`
           ).join('') : ''}
         <div class="content">${renderedHTML}</div>
@@ -2610,33 +2610,23 @@ ${fullResponse.slice(-1000)}...`;
                             📋 Copy
                           </Button>
                         </div>
-                        <div className="prose prose-sm max-w-none bg-white p-6 rounded-lg border border-yellow-200">
-                          {isMathViewEnabled ? (
-                            <MathJax>
-                              {perfectAssignment.split('\n').map((line: string, i: number) => (
-                                <div key={i}>{line || <br />}</div>
-                              ))}
-                            </MathJax>
-                          ) : (
-                            <div className="whitespace-pre-wrap font-mono text-sm">
-                              {perfectAssignment}
-                            </div>
-                          )}
+                        <div className="prose prose-sm max-w-none bg-white p-6 rounded-lg border border-yellow-200 whitespace-pre-wrap">
+                          {perfectAssignment}
                         </div>
                         <div className="mt-4 flex gap-3">
                           <Button
                             variant="outline"
                             onClick={() => {
-                              // Send to main solution area
-                              setLlmResponse(perfectAssignment);
+                              // Copy to clipboard instead
+                              navigator.clipboard.writeText(perfectAssignment);
                               toast({
-                                title: "Perfect assignment loaded",
-                                description: "Now showing in main solution area",
+                                title: "Copied to clipboard",
+                                description: "Perfect assignment ready to paste anywhere",
                               });
                             }}
                             data-testid="button-use-perfect"
                           >
-                            📤 Use as Main Solution
+                            📤 Copy to Clipboard
                           </Button>
                           <Button
                             variant="outline"
