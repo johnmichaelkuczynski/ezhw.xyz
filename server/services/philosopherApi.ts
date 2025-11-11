@@ -18,44 +18,11 @@ interface PhilosopherApiResponse {
   error?: string;
 }
 
-const PHILOSOPHICAL_KEYWORDS = [
-  'kuczynski', 'john-michael kuczynski', 'john michael kuczynski',
-  'freud', 'plato', 'aristotle', 'kant', 'hegel', 'nietzsche', 'descartes',
-  'hume', 'locke', 'berkeley', 'spinoza', 'leibniz', 'rousseau', 'hobbes',
-  'mill', 'bentham', 'kierkegaard', 'schopenhauer', 'wittgenstein', 'heidegger',
-  'sartre', 'camus', 'foucault', 'derrida', 'habermas', 'rawls', 'nozick',
-  'socrates', 'epicurus', 'marcus aurelius', 'aquinas', 'augustine',
-  'levi-strauss', 'levi strauss', 'chomsky', 'russell', 'galileo',
-  'james', 'le bon', 'darwin', 'jung', 'poe', 'marx', 'keynes',
-  'newton', 'machiavelli', 'bierce', 'poincare', 'bergson', 'jack london',
-  'adler', 'engels', 'von mises', 'veblen', 'swett'
-];
-
-export function detectPhilosophicalContent(text: string): boolean {
-  const lowerText = text.toLowerCase();
-  return PHILOSOPHICAL_KEYWORDS.some(keyword => lowerText.includes(keyword));
-}
-
-export function extractPhilosophicalTopics(text: string): string[] {
-  const lowerText = text.toLowerCase();
-  const foundTopics: string[] = [];
-  
-  PHILOSOPHICAL_KEYWORDS.forEach(keyword => {
-    if (lowerText.includes(keyword)) {
-      foundTopics.push(keyword);
-    }
-  });
-  
-  return Array.from(new Set(foundTopics));
-}
-
 function generateAuthHeaders(requestBody: any): Record<string, string> {
-  const timestamp = Date.now().toString();
+  const timestamp = Math.floor(Date.now() / 1000).toString();
   const nonce = crypto.randomBytes(16).toString('hex');
   const bodyString = JSON.stringify(requestBody);
   
-  // Generate HMAC-SHA256 signature
-  // Signature format: HMAC-SHA256(privateKey, appId:timestamp:nonce:body)
   const message = `${ZHI_APP_ID}:${timestamp}:${nonce}:${bodyString}`;
   const signature = crypto
     .createHmac('sha256', ZHI_PRIVATE_KEY!)
@@ -63,7 +30,7 @@ function generateAuthHeaders(requestBody: any): Record<string, string> {
     .digest('base64');
   
   console.log('\n╔═══════════════════════════════════════════════════════════════');
-  console.log('║ PHILOSOPHER API - REQUEST DETAILS');
+  console.log('║ AP API - REQUEST DETAILS');
   console.log('╠═══════════════════════════════════════════════════════════════');
   console.log(`║ Endpoint:       ${PHILOSOPHER_API_URL}/query`);
   console.log(`║ App ID:         ${ZHI_APP_ID}`);
@@ -95,20 +62,16 @@ function generateAuthHeaders(requestBody: any): Record<string, string> {
   };
 }
 
-export async function fetchPhilosophicalContent(query: string): Promise<PhilosopherContent | null> {
+export async function fetchPhilosopherContent(query: string): Promise<PhilosopherContent | null> {
   if (!ZHI_PRIVATE_KEY) {
-    console.warn('[PHILOSOPHER API] ZHI_PRIVATE_KEY not configured');
+    console.warn('[AP API] ZHI_PRIVATE_KEY not configured');
     return null;
   }
 
   try {
-    console.log(`[PHILOSOPHER API] Fetching content for query: "${query.substring(0, 100)}..."`);
+    console.log(`[AP API] Sending query: "${query.substring(0, 100)}..."`);
     
-    const requestBody = {
-      query: query,
-      topics: extractPhilosophicalTopics(query),
-    };
-    
+    const requestBody = { query };
     const authHeaders = generateAuthHeaders(requestBody);
     
     const response = await axios.post<PhilosopherApiResponse>(
@@ -116,110 +79,84 @@ export async function fetchPhilosophicalContent(query: string): Promise<Philosop
       requestBody,
       {
         headers: authHeaders,
-        timeout: 10000, // 10 second timeout
+        timeout: 10000,
       }
     );
 
     if (response.data.success && response.data.data) {
-      console.log(`[PHILOSOPHER API] ✓ Successfully retrieved philosophical content`);
+      console.log(`[AP API] ✓ Successfully retrieved content`);
       return response.data.data;
     } else {
-      console.warn(`[PHILOSOPHER API] API returned unsuccessful response:`, response.data.error);
+      console.warn(`[AP API] Unsuccessful response:`, response.data.error);
       return null;
     }
   } catch (error: any) {
     if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      console.error(`[PHILOSOPHER API] ✗ Server error (${error.response.status}):`, error.response.data);
+      console.error(`[AP API] ✗ Server error (${error.response.status}):`, error.response.data);
       
       if (error.response.status === 401) {
-        console.error('[PHILOSOPHER API] ✗ Unauthorized - check ZHI_PRIVATE_KEY configuration');
-      } else if (error.response.status === 404) {
-        console.warn('[PHILOSOPHER API] No content found for this query');
+        console.error('[AP API] ✗ Unauthorized - check ZHI_PRIVATE_KEY');
       }
     } else if (error.request) {
-      // The request was made but no response was received
-      console.error('[PHILOSOPHER API] ✗ No response from server:', error.message);
+      console.error('[AP API] ✗ No response from server:', error.message);
     } else {
-      // Something happened in setting up the request that triggered an Error
-      console.error('[PHILOSOPHER API] ✗ Request setup error:', error.message);
+      console.error('[AP API] ✗ Request error:', error.message);
     }
     
     return null;
   }
 }
 
-export function enrichTextWithPhilosophicalContent(
+export function enrichTextWithPhilosopherContent(
   originalText: string,
-  philosophicalContent: PhilosopherContent
+  philosopherContent: PhilosopherContent
 ): string {
-  let enrichedText = originalText;
-  
-  // Add philosophical content as context for the LLM
   const enrichmentSections: string[] = [];
   
-  if (philosophicalContent.quotes && philosophicalContent.quotes.length > 0) {
-    enrichmentSections.push(`\n\n=== RELEVANT PHILOSOPHICAL QUOTES ===\n${philosophicalContent.quotes.join('\n\n')}`);
+  if (philosopherContent.quotes && philosopherContent.quotes.length > 0) {
+    enrichmentSections.push(`\n\n=== QUOTES ===\n${philosopherContent.quotes.join('\n\n')}`);
   }
   
-  if (philosophicalContent.passages && philosophicalContent.passages.length > 0) {
-    enrichmentSections.push(`\n\n=== RELEVANT PHILOSOPHICAL PASSAGES ===\n${philosophicalContent.passages.join('\n\n')}`);
+  if (philosopherContent.passages && philosopherContent.passages.length > 0) {
+    enrichmentSections.push(`\n\n=== PASSAGES ===\n${philosopherContent.passages.join('\n\n')}`);
   }
   
-  if (philosophicalContent.context) {
-    enrichmentSections.push(`\n\n=== PHILOSOPHICAL CONTEXT ===\n${philosophicalContent.context}`);
+  if (philosopherContent.context) {
+    enrichmentSections.push(`\n\n=== CONTEXT ===\n${philosopherContent.context}`);
   }
   
-  if (philosophicalContent.source) {
-    enrichmentSections.push(`\n\n=== SOURCE ===\n${philosophicalContent.source}`);
+  if (philosopherContent.source) {
+    enrichmentSections.push(`\n\n=== SOURCE ===\n${philosopherContent.source}`);
   }
   
   if (enrichmentSections.length > 0) {
-    enrichedText = `${originalText}\n\n` +
+    const enrichedText = `${originalText}\n\n` +
       `========================================\n` +
-      `AUTHORITATIVE PHILOSOPHICAL REFERENCE MATERIAL\n` +
-      `(Use this material to enrich and ground your response with specific citations and references)\n` +
+      `REFERENCE MATERIAL FROM DATABASE\n` +
+      `(Use this material to enrich your response with specific citations)\n` +
       `========================================` +
       enrichmentSections.join('') +
       `\n\n========================================`;
     
-    console.log(`[PHILOSOPHER API] ✓ Enriched text with ${enrichmentSections.length} philosophical content sections`);
+    console.log(`[AP API] ✓ Enriched text with ${enrichmentSections.length} sections`);
+    return enrichedText;
   }
   
-  return enrichedText;
+  return originalText;
 }
 
 export async function enrichWithPhilosophicalContentIfNeeded(text: string, forceQuery: boolean = false): Promise<string> {
-  if (forceQuery) {
-    console.log('[PHILOSOPHER API] 🔥 FORCE MODE: Querying philosopher database (toggle ON)');
-    const philosophicalContent = await fetchPhilosophicalContent(text);
-    
-    if (!philosophicalContent) {
-      console.log('[PHILOSOPHER API] No philosophical content retrieved, proceeding without enrichment');
-      return text;
-    }
-    
-    return enrichTextWithPhilosophicalContent(text, philosophicalContent);
-  }
-  
-  const hasPhilosophicalContent = detectPhilosophicalContent(text);
-  
-  if (!hasPhilosophicalContent) {
-    console.log('[PHILOSOPHER API] No philosophical keywords detected, skipping enrichment');
+  if (!forceQuery) {
     return text;
   }
   
-  console.log('[PHILOSOPHER API] Philosophical keywords detected, fetching reference material...');
-  const topics = extractPhilosophicalTopics(text);
-  console.log(`[PHILOSOPHER API] Detected topics: ${topics.join(', ')}`);
+  console.log('[AP API] Toggle ON - querying database');
+  const content = await fetchPhilosopherContent(text);
   
-  const philosophicalContent = await fetchPhilosophicalContent(text);
-  
-  if (!philosophicalContent) {
-    console.log('[PHILOSOPHER API] No philosophical content retrieved, proceeding without enrichment');
+  if (!content) {
+    console.log('[AP API] No content retrieved');
     return text;
   }
   
-  return enrichTextWithPhilosophicalContent(text, philosophicalContent);
+  return enrichTextWithPhilosopherContent(text, content);
 }

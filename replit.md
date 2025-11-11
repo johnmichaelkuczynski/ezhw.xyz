@@ -57,19 +57,19 @@ The application employs a client-server architecture.
 
 ## Recent Changes
 
-### November 11, 2025 - Ask-a-Philosopher API Integration with HMAC Authentication
-- Created `server/services/philosopherApi.ts` with comprehensive philosophical keyword detection
-- Integrated automatic content enrichment in `/api/process-text` pipeline before LLM processing
-- **Implemented HMAC-SHA256 authentication** with required headers:
+### November 11, 2025 - Ask-a-Philosopher API Integration
+- Created `server/services/philosopherApi.ts` for AP database integration
+- **HMAC-SHA256 Authentication Implementation:**
   - X-ZHI-App-Id: "ezhw"
-  - X-ZHI-Timestamp: Current Unix timestamp
+  - X-ZHI-Timestamp: Unix seconds (Math.floor(Date.now() / 1000))
   - X-ZHI-Nonce: Random 32-char hex string
   - X-ZHI-Signature: Base64 HMAC-SHA256 of "appId:timestamp:nonce:body"
-- Uses ZHI_PRIVATE_KEY from environment variables for signature generation
-- Implemented graceful error handling with detailed logging for unauthorized/failed requests
-- Covered 60+ philosophical keywords including major philosophers, schools of thought, and concepts
-- Enriched text includes quotes, passages, context, and source attribution from 50,000+ page database
-- **Added UI toggle button** "Philosopher DB: ON/OFF" to force philosophical enrichment on any request
-- Toggle feature works for both short assignments and long chunked processing (1000+ words)
-- Fixed API endpoint to https://analyticphilosophy.net/zhi/query with proper HMAC authentication
-- Restored Zod schema validation for request integrity in all processing flows
+  - Uses ZHI_PRIVATE_KEY environment variable
+- **Toggle Behavior:** When "Philosopher DB: ON", system automatically queries AP database for ANY request
+- **No Keyword Detection:** Removed all client-side filtering - AP server decides what content to return
+- API endpoint: https://analyticphilosophy.net/zhi/query
+- Request format: `{ "query": "user's text" }` (no preprocessing or parameterization)
+- Response enriches LLM prompt with quotes, passages, context, and sources from 50,000+ page database
+- Detailed logging shows exact request details (endpoint, headers, signature calculation) for debugging
+- Works for both short assignments and chunked processing (1000+ words)
+- Full Zod schema validation for request integrity in all processing flows
