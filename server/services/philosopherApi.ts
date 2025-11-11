@@ -5,6 +5,35 @@ const PHILOSOPHER_API_URL = 'https://analyticphilosophy.net/zhi';
 const ZHI_PRIVATE_KEY = process.env.ZHI_PRIVATE_KEY;
 const ZHI_APP_ID = 'ezhw';
 
+interface CitationInfo {
+  author: string;
+  work: string;
+  chunkIndex: number;
+}
+
+interface SearchResult {
+  excerpt: string;
+  citation: CitationInfo;
+  relevance: number;
+  tokens: number;
+}
+
+interface PhilosopherApiResponse {
+  results: SearchResult[];
+  quotes: string[];
+  meta: {
+    resultsReturned: number;
+    limitApplied: number;
+    queryProcessed: string;
+    filters: {
+      author: string | null;
+      work: string | null;
+      keywords: string | null;
+    };
+    timestamp: number;
+  };
+}
+
 interface PhilosopherContent {
   quotes?: string[];
   passages?: string[];
@@ -12,21 +41,23 @@ interface PhilosopherContent {
   source?: string;
 }
 
-interface PhilosopherApiResponse {
-  success: boolean;
-  data?: PhilosopherContent;
-  error?: string;
-}
-
 function generateAuthHeaders(requestBody: any): Record<string, string> {
   const timestamp = Date.now().toString();
   const nonce = crypto.randomBytes(16).toString('hex');
   const bodyString = JSON.stringify(requestBody);
   
-  const message = `${ZHI_APP_ID}:${timestamp}:${nonce}:${bodyString}`;
+  const bodyHash = crypto
+    .createHash('sha256')
+    .update(bodyString)
+    .digest('hex');
+  
+  const method = 'POST';
+  const url = '/zhi/query';
+  const payload = `${method}\n${url}\n${timestamp}\n${nonce}\n${bodyHash}`;
+  
   const signature = crypto
     .createHmac('sha256', ZHI_PRIVATE_KEY!)
-    .update(message)
+    .update(payload)
     .digest('base64');
   
   console.log('\n╔═══════════════════════════════════════════════════════════════');
@@ -41,8 +72,9 @@ function generateAuthHeaders(requestBody: any): Record<string, string> {
   console.log('║ REQUEST BODY:');
   console.log(`║ ${bodyString}`);
   console.log('╠═══════════════════════════════════════════════════════════════');
-  console.log('║ SIGNATURE CALCULATION:');
-  console.log(`║ Message:        ${message.substring(0, 100)}...`);
+  console.log('║ SIGNATURE CALCULATION (SERVER FORMAT):');
+  console.log(`║ Body Hash:      ${bodyHash}`);
+  console.log(`║ Payload:        ${payload.replace(/\n/g, '\\n')}`);
   console.log(`║ Signature:      ${signature}`);
   console.log('╠═══════════════════════════════════════════════════════════════');
   console.log('║ HEADERS SENT:');
@@ -79,17 +111,25 @@ export async function fetchPhilosopherContent(query: string): Promise<Philosophe
       requestBody,
       {
         headers: authHeaders,
-        timeout: 10000,
+        timeout: 30000,
       }
     );
 
-    if (response.data.success && response.data.data) {
-      console.log(`[AP API] ✓ Successfully retrieved content`);
-      return response.data.data;
-    } else {
-      console.warn(`[AP API] Unsuccessful response:`, response.data.error);
-      return null;
-    }
+    console.log('[AP API] ✓ Successfully retrieved content');
+    console.log(`[AP API] Results: ${response.data.results.length} excerpts, ${response.data.quotes.length} quotes`);
+    
+    const content: PhilosopherContent = {
+      quotes: response.data.quotes.length > 0 ? response.data.quotes : undefined,
+      passages: response.data.results.length > 0 
+        ? response.data.results.map(r => `"${r.excerpt}"\n— ${r.citation.author}, ${r.citation.work}`)
+        : undefined,
+      context: response.data.meta.queryProcessed 
+        ? `Query processed: ${response.data.meta.queryProcessed}\nReturned ${response.data.meta.resultsReturned} results from the Ask-a-Philosopher database.`
+        : undefined,
+      source: 'Ask-a-Philosopher Database (https://analyticphilosophy.net/)'
+    };
+    
+    return content;
   } catch (error: any) {
     if (error.response) {
       console.error(`[AP API] ✗ Server error (${error.response.status}):`, error.response.data);
