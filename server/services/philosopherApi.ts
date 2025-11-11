@@ -248,10 +248,7 @@ function extractAuthorFromQuery(text: string): string | undefined {
       const match = text.match(pattern);
       if (match) {
         let author = match[0].replace(/(?:quotes?\s+(?:by|from)\s+)/i, '').trim();
-        if (author.toLowerCase().includes('kuczynski')) {
-          return 'Kuczynski';
-        }
-        return author.charAt(0).toUpperCase() + author.slice(1).toLowerCase();
+        return author.toLowerCase();
       }
     }
   }
