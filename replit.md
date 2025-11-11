@@ -44,11 +44,23 @@ The application employs a client-server architecture.
 - **Multi-User Data Isolation**: PostgreSQL enforces user-scoped data access and secure deletion, supporting anonymous users.
 - **GPT BYPASS**: Functionality for text rewriting and AI detection score reduction with a dedicated interface and chunked processing.
 - **Grading Assistant**: AI-powered grading tool that strictly adheres to user-provided rubrics in any format (letter grades, numeric, pass/fail).
+- **Ask-a-Philosopher Integration**: Automated philosophical content enrichment via secure API integration with https://analyticphilosophy.net/. Detects philosophical topics (Freud, Plato, Chomsky, etc.) in user requests and automatically fetches authoritative quotes, passages, and context to enrich homework responses. Uses ZHI_PRIVATE_KEY for authentication with graceful degradation on API failures.
 
 ## External Dependencies
 
 - **Database**: PostgreSQL
 - **LLM APIs**: Anthropic, OpenAI, Azure OpenAI, DeepSeek, Perplexity
 - **Payment Gateways**: PayPal, Stripe
+- **Philosophical Content**: Ask-a-Philosopher API (https://analyticphilosophy.net/)
 - **CDN Services**: MathJax, Google Fonts
 - **Speech Services**: Azure Cognitive Services
+
+## Recent Changes
+
+### November 11, 2025 - Ask-a-Philosopher API Integration
+- Created `server/services/philosopherApi.ts` with comprehensive philosophical keyword detection
+- Integrated automatic content enrichment in `/api/process-text` pipeline before LLM processing
+- Added secure authentication using ZHI_PRIVATE_KEY environment variable
+- Implemented graceful error handling with detailed logging for unauthorized/failed requests
+- Covered 60+ philosophical keywords including major philosophers, schools of thought, and concepts
+- Enriched text includes quotes, passages, context, and source attribution in structured format
