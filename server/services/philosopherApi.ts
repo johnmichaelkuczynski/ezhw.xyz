@@ -19,26 +19,16 @@ interface PhilosopherApiResponse {
 }
 
 const PHILOSOPHICAL_KEYWORDS = [
-  // Philosophers
+  'kuczynski', 'john-michael kuczynski', 'john michael kuczynski',
   'freud', 'plato', 'aristotle', 'kant', 'hegel', 'nietzsche', 'descartes',
   'hume', 'locke', 'berkeley', 'spinoza', 'leibniz', 'rousseau', 'hobbes',
   'mill', 'bentham', 'kierkegaard', 'schopenhauer', 'wittgenstein', 'heidegger',
   'sartre', 'camus', 'foucault', 'derrida', 'habermas', 'rawls', 'nozick',
   'socrates', 'epicurus', 'marcus aurelius', 'aquinas', 'augustine',
-  'levi-strauss', 'levi strauss', 'chomsky', 'depth psychology', 'depth-psychology',
-  'depth grammar', 'depth-grammar', 'structuralism', 'psychoanalysis',
-  
-  // Philosophical concepts
-  'epistemology', 'metaphysics', 'ontology', 'phenomenology', 'existentialism',
-  'utilitarianism', 'deontology', 'virtue ethics', 'categorical imperative',
-  'social contract', 'dialectic', 'phenomenology', 'hermeneutics',
-  'postmodernism', 'pragmatism', 'stoicism', 'skepticism', 'empiricism',
-  'rationalism', 'idealism', 'materialism', 'dualism', 'monism',
-  
-  // Topics that often need philosophical grounding
-  'philosophy', 'philosophical', 'philosopher', 'ethics', 'morality',
-  'consciousness', 'free will', 'determinism', 'mind-body problem',
-  'theory of knowledge', 'logic', 'aesthetics', 'political philosophy'
+  'levi-strauss', 'levi strauss', 'chomsky', 'russell', 'galileo',
+  'james', 'le bon', 'darwin', 'jung', 'poe', 'marx', 'keynes',
+  'newton', 'machiavelli', 'bierce', 'poincare', 'bergson', 'jack london',
+  'adler', 'engels', 'von mises', 'veblen', 'swett'
 ];
 
 export function detectPhilosophicalContent(text: string): boolean {
@@ -201,19 +191,26 @@ export function enrichTextWithPhilosophicalContent(
 }
 
 export async function enrichWithPhilosophicalContentIfNeeded(text: string, forceQuery: boolean = false): Promise<string> {
+  if (forceQuery) {
+    console.log('[PHILOSOPHER API] 🔥 FORCE MODE: Querying philosopher database (toggle ON)');
+    const philosophicalContent = await fetchPhilosophicalContent(text);
+    
+    if (!philosophicalContent) {
+      console.log('[PHILOSOPHER API] No philosophical content retrieved, proceeding without enrichment');
+      return text;
+    }
+    
+    return enrichTextWithPhilosophicalContent(text, philosophicalContent);
+  }
+  
   const hasPhilosophicalContent = detectPhilosophicalContent(text);
   
-  if (!forceQuery && !hasPhilosophicalContent) {
-    console.log('[PHILOSOPHER API] No philosophical content detected, skipping enrichment');
+  if (!hasPhilosophicalContent) {
+    console.log('[PHILOSOPHER API] No philosophical keywords detected, skipping enrichment');
     return text;
   }
   
-  if (forceQuery) {
-    console.log('[PHILOSOPHER API] 🔥 FORCE MODE: Always querying philosopher database');
-  } else {
-    console.log('[PHILOSOPHER API] Philosophical content detected, fetching reference material...');
-  }
-  
+  console.log('[PHILOSOPHER API] Philosophical keywords detected, fetching reference material...');
   const topics = extractPhilosophicalTopics(text);
   console.log(`[PHILOSOPHER API] Detected topics: ${topics.join(', ')}`);
   
