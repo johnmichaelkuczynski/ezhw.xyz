@@ -57,10 +57,14 @@ The application employs a client-server architecture.
 
 ## Recent Changes
 
-### November 11, 2025 - Ask-a-Philosopher API Integration
+### November 11, 2025 - Ask-a-Philosopher API Integration with Force Toggle
 - Created `server/services/philosopherApi.ts` with comprehensive philosophical keyword detection
 - Integrated automatic content enrichment in `/api/process-text` pipeline before LLM processing
 - Added secure authentication using ZHI_PRIVATE_KEY environment variable
 - Implemented graceful error handling with detailed logging for unauthorized/failed requests
 - Covered 60+ philosophical keywords including major philosophers, schools of thought, and concepts
 - Enriched text includes quotes, passages, context, and source attribution in structured format
+- **NEW**: Added UI toggle button "Philosopher DB: ON/OFF" to force philosophical enrichment on any request
+- Toggle feature works for both short assignments and long chunked processing (1000+ words)
+- Fixed API endpoint to https://analyticphilosophy.net/zhi/query with proper validation
+- Restored Zod schema validation for request integrity in all processing flows
