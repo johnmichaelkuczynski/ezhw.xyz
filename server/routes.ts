@@ -26,6 +26,7 @@ import { aiProviderService } from './services/aiProviders';
 import { gptZeroService } from './services/gptZero';
 import { fileProcessorService } from './services/fileProcessor';
 import { textChunkerService } from './services/textChunker';
+import { enrichWithPhilosophicalContentIfNeeded } from './services/philosopherApi';
 
 // LLM imports
 // @ts-ignore
@@ -3375,7 +3376,10 @@ Just provide the final, polished, A+ quality assignment that a student could sub
         }
       }
       
-      // Count tokens based on combined text (inputText + reference documents)
+      // PHILOSOPHER API: Enrich with philosophical content if needed
+      combinedText = await enrichWithPhilosophicalContentIfNeeded(combinedText);
+      
+      // Count tokens based on combined text (inputText + reference documents + philosophical enrichment)
       const inputTokens = countTokens(combinedText);
       const estimatedOutputTokens = estimateOutputTokens(combinedText);
       const totalTokens = inputTokens + estimatedOutputTokens;
