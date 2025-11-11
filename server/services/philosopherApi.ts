@@ -19,7 +19,7 @@ interface PhilosopherApiResponse {
 }
 
 function generateAuthHeaders(requestBody: any): Record<string, string> {
-  const timestamp = Math.floor(Date.now() / 1000).toString();
+  const timestamp = Date.now().toString();
   const nonce = crypto.randomBytes(16).toString('hex');
   const bodyString = JSON.stringify(requestBody);
   
@@ -154,8 +154,8 @@ export async function enrichWithPhilosophicalContentIfNeeded(text: string, force
   const content = await fetchPhilosopherContent(text);
   
   if (!content) {
-    console.log('[AP API] No content retrieved');
-    return text;
+    console.error('[AP API] ⛔ KILL SWITCH ACTIVATED - Database query failed, refusing to generate fabricated content');
+    throw new Error('KILL SWITCH: AP database query failed. Cannot proceed without authentic database content. Toggle must be OFF to process this request.');
   }
   
   return enrichTextWithPhilosopherContent(text, content);
