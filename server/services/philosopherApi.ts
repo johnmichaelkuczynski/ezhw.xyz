@@ -94,16 +94,25 @@ function generateAuthHeaders(requestBody: any): Record<string, string> {
   };
 }
 
-export async function fetchPhilosopherContent(query: string): Promise<PhilosopherContent | null> {
+export async function fetchPhilosopherContent(query: string, author?: string): Promise<PhilosopherContent | null> {
   if (!ZHI_PRIVATE_KEY) {
     console.warn('[AP API] ZHI_PRIVATE_KEY not configured');
     return null;
   }
 
   try {
-    console.log(`[AP API] Sending query: "${query.substring(0, 100)}..."`);
+    console.log(`[AP API] Sending query: "${query.substring(0, 100)}..." with author filter: ${author || 'none'}`);
     
-    const requestBody = { query };
+    const requestBody: any = { 
+      query,
+      limit: 10,
+      includeQuotes: true
+    };
+    
+    if (author) {
+      requestBody.author = author;
+    }
+    
     const authHeaders = generateAuthHeaders(requestBody);
     
     const response = await axios.post<PhilosopherApiResponse>(
@@ -220,13 +229,47 @@ export function enrichTextWithPhilosopherContent(
   return originalText;
 }
 
+function extractAuthorFromQuery(text: string): string | undefined {
+  const authorPatterns = [
+    /(?:quotes?\s+(?:by|from)\s+)?(?:john-?michael\s+)?kuczynski/i,
+    /(?:quotes?\s+(?:by|from)\s+)?plato/i,
+    /(?:quotes?\s+(?:by|from)\s+)?freud/i,
+    /(?:quotes?\s+(?:by|from)\s+)?nietzsche/i,
+    /(?:quotes?\s+(?:by|from)\s+)?kant/i,
+    /(?:quotes?\s+(?:by|from)\s+)?hume/i,
+    /(?:quotes?\s+(?:by|from)\s+)?descartes/i,
+    /(?:quotes?\s+(?:by|from)\s+)?aristotle/i,
+    /(?:quotes?\s+(?:by|from)\s+)?russell/i,
+    /(?:quotes?\s+(?:by|from)\s+)?wittgenstein/i,
+  ];
+  
+  for (const pattern of authorPatterns) {
+    if (pattern.test(text)) {
+      const match = text.match(pattern);
+      if (match) {
+        let author = match[0].replace(/(?:quotes?\s+(?:by|from)\s+)/i, '').trim();
+        if (author.toLowerCase().includes('kuczynski')) {
+          return 'Kuczynski';
+        }
+        return author.charAt(0).toUpperCase() + author.slice(1).toLowerCase();
+      }
+    }
+  }
+  
+  return undefined;
+}
+
 export async function enrichWithPhilosophicalContentIfNeeded(text: string, forceQuery: boolean = false): Promise<string> {
   if (!forceQuery) {
     return text;
   }
   
   console.log('[AP API] Toggle ON - querying database');
-  const content = await fetchPhilosopherContent(text);
+  
+  const author = extractAuthorFromQuery(text);
+  console.log(`[AP API] Detected author filter: ${author || 'none'}`);
+  
+  const content = await fetchPhilosopherContent(text, author);
   
   if (!content) {
     console.error('[AP API] ⛔ KILL SWITCH ACTIVATED - Database query failed, refusing to generate fabricated content');
