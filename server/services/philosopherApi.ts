@@ -154,31 +154,51 @@ export function enrichTextWithPhilosopherContent(
   const enrichmentSections: string[] = [];
   
   if (philosopherContent.quotes && philosopherContent.quotes.length > 0) {
-    enrichmentSections.push(`\n\n=== QUOTES ===\n${philosopherContent.quotes.join('\n\n')}`);
+    enrichmentSections.push(`\n\n=== AUTHENTIC QUOTES FROM DATABASE ===\n${philosopherContent.quotes.join('\n\n')}`);
   }
   
   if (philosopherContent.passages && philosopherContent.passages.length > 0) {
-    enrichmentSections.push(`\n\n=== PASSAGES ===\n${philosopherContent.passages.join('\n\n')}`);
+    enrichmentSections.push(`\n\n=== AUTHENTIC PASSAGES FROM DATABASE ===\n${philosopherContent.passages.join('\n\n')}`);
   }
   
   if (philosopherContent.context) {
-    enrichmentSections.push(`\n\n=== CONTEXT ===\n${philosopherContent.context}`);
+    enrichmentSections.push(`\n\n=== DATABASE CONTEXT ===\n${philosopherContent.context}`);
   }
   
   if (philosopherContent.source) {
     enrichmentSections.push(`\n\n=== SOURCE ===\n${philosopherContent.source}`);
   }
   
+  const isQuoteRequest = /(?:give me|get me|show me|provide|list|find).*?(?:\d+\s*)?(?:original\s+)?(?:quotes?|quotations?|passages?|excerpts?)/i.test(originalText);
+  
   if (enrichmentSections.length > 0) {
-    const enrichedText = `${originalText}\n\n` +
-      `========================================\n` +
-      `REFERENCE MATERIAL FROM DATABASE\n` +
-      `(Use this material to enrich your response with specific citations)\n` +
-      `========================================` +
-      enrichmentSections.join('') +
-      `\n\n========================================`;
+    let instructionText = '';
     
-    console.log(`[AP API] ✓ Enriched text with ${enrichmentSections.length} sections`);
+    if (isQuoteRequest) {
+      instructionText = `========================================\n` +
+        `🔴 CRITICAL INSTRUCTIONS - READ CAREFULLY:\n` +
+        `========================================\n` +
+        `The user requested AUTHENTIC QUOTES from the database.\n` +
+        `You MUST extract quotes DIRECTLY from the passages below.\n` +
+        `DO NOT generate new quotes.\n` +
+        `DO NOT create quotes "inspired by" the content.\n` +
+        `DO NOT synthesize or paraphrase.\n` +
+        `ONLY extract exact text from the passages with proper attribution.\n` +
+        `If requesting quotes from a specific author, ONLY use passages\n` +
+        `where that author is explicitly cited.\n` +
+        `========================================\n` +
+        `AUTHENTIC DATABASE CONTENT:\n` +
+        `========================================`;
+    } else {
+      instructionText = `========================================\n` +
+        `DATABASE REFERENCE MATERIAL:\n` +
+        `(Use these authentic passages to support your response)\n` +
+        `========================================`;
+    }
+    
+    const enrichedText = `${originalText}\n\n` + instructionText + enrichmentSections.join('') + `\n\n========================================`;
+    
+    console.log(`[AP API] ✓ Enriched text with ${enrichmentSections.length} sections (Quote request: ${isQuoteRequest})`);
     return enrichedText;
   }
   
