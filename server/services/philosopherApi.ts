@@ -1,7 +1,9 @@
 import axios from 'axios';
+import crypto from 'crypto';
 
 const PHILOSOPHER_API_URL = 'https://analyticphilosophy.net/zhi';
 const ZHI_PRIVATE_KEY = process.env.ZHI_PRIVATE_KEY;
+const ZHI_APP_ID = 'ezhw';
 
 interface PhilosopherContent {
   quotes?: string[];
@@ -57,6 +59,28 @@ export function extractPhilosophicalTopics(text: string): string[] {
   return Array.from(new Set(foundTopics));
 }
 
+function generateAuthHeaders(requestBody: any): Record<string, string> {
+  const timestamp = Date.now().toString();
+  const nonce = crypto.randomBytes(16).toString('hex');
+  const bodyString = JSON.stringify(requestBody);
+  
+  // Generate HMAC-SHA256 signature
+  // Signature format: HMAC-SHA256(privateKey, appId:timestamp:nonce:body)
+  const message = `${ZHI_APP_ID}:${timestamp}:${nonce}:${bodyString}`;
+  const signature = crypto
+    .createHmac('sha256', ZHI_PRIVATE_KEY!)
+    .update(message)
+    .digest('base64');
+  
+  return {
+    'X-ZHI-App-Id': ZHI_APP_ID,
+    'X-ZHI-Timestamp': timestamp,
+    'X-ZHI-Nonce': nonce,
+    'X-ZHI-Signature': signature,
+    'Content-Type': 'application/json',
+  };
+}
+
 export async function fetchPhilosophicalContent(query: string): Promise<PhilosopherContent | null> {
   if (!ZHI_PRIVATE_KEY) {
     console.warn('[PHILOSOPHER API] ZHI_PRIVATE_KEY not configured');
@@ -66,17 +90,18 @@ export async function fetchPhilosophicalContent(query: string): Promise<Philosop
   try {
     console.log(`[PHILOSOPHER API] Fetching content for query: "${query.substring(0, 100)}..."`);
     
+    const requestBody = {
+      query: query,
+      topics: extractPhilosophicalTopics(query),
+    };
+    
+    const authHeaders = generateAuthHeaders(requestBody);
+    
     const response = await axios.post<PhilosopherApiResponse>(
       `${PHILOSOPHER_API_URL}/query`,
+      requestBody,
       {
-        query: query,
-        topics: extractPhilosophicalTopics(query),
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${ZHI_PRIVATE_KEY}`,
-          'Content-Type': 'application/json',
-        },
+        headers: authHeaders,
         timeout: 10000, // 10 second timeout
       }
     );
