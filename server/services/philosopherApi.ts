@@ -118,15 +118,20 @@ export async function fetchPhilosopherContent(query: string): Promise<Philosophe
     console.log('[AP API] ✓ Successfully retrieved content');
     console.log(`[AP API] Results: ${response.data.results.length} excerpts, ${response.data.quotes.length} quotes`);
     
+    const passages = response.data.results.map(r => 
+      `PASSAGE CONTENT:\n${r.excerpt}\n\nCITATION: ${r.citation.author}, "${r.citation.work}"\nRELEVANCE: ${r.relevance}`
+    );
+    
+    console.log(`[AP API] Sample excerpt: ${response.data.results[0]?.excerpt.substring(0, 200)}...`);
+    console.log(`[AP API] First citation: ${response.data.results[0]?.citation.author}`);
+    
     const content: PhilosopherContent = {
       quotes: response.data.quotes.length > 0 ? response.data.quotes : undefined,
-      passages: response.data.results.length > 0 
-        ? response.data.results.map(r => `"${r.excerpt}"\n— ${r.citation.author}, ${r.citation.work}`)
-        : undefined,
+      passages: passages.length > 0 ? passages : undefined,
       context: response.data.meta.queryProcessed 
-        ? `Query processed: ${response.data.meta.queryProcessed}\nReturned ${response.data.meta.resultsReturned} results from the Ask-a-Philosopher database.`
+        ? `Database query: "${response.data.meta.queryProcessed}"\nReturned ${response.data.meta.resultsReturned} results.\n\nNOTE: These passages contain the exact text from the database. Extract quotes word-for-word.`
         : undefined,
-      source: 'Ask-a-Philosopher Database (https://analyticphilosophy.net/)'
+      source: 'Ask-a-Philosopher Database (50,000+ pages)'
     };
     
     return content;
@@ -175,20 +180,30 @@ export function enrichTextWithPhilosopherContent(
     let instructionText = '';
     
     if (isQuoteRequest) {
-      instructionText = `========================================\n` +
-        `🔴 CRITICAL INSTRUCTIONS - READ CAREFULLY:\n` +
+      instructionText = `\n\n` +
         `========================================\n` +
-        `The user requested AUTHENTIC QUOTES from the database.\n` +
-        `You MUST extract quotes DIRECTLY from the passages below.\n` +
-        `DO NOT generate new quotes.\n` +
-        `DO NOT create quotes "inspired by" the content.\n` +
-        `DO NOT synthesize or paraphrase.\n` +
-        `ONLY extract exact text from the passages with proper attribution.\n` +
-        `If requesting quotes from a specific author, ONLY use passages\n` +
-        `where that author is explicitly cited.\n` +
-        `========================================\n` +
-        `AUTHENTIC DATABASE CONTENT:\n` +
-        `========================================`;
+        `🔴🔴🔴 ABSOLUTE MANDATORY DIRECTIVE 🔴🔴🔴\n` +
+        `========================================\n\n` +
+        `YOU MUST EXTRACT QUOTES FROM THE PASSAGES BELOW.\n` +
+        `THIS IS NOT OPTIONAL. THIS IS NOT NEGOTIABLE.\n\n` +
+        `WHAT YOU MUST DO:\n` +
+        `1. Take exact sentences/paragraphs from passages below\n` +
+        `2. Copy them word-for-word with proper citation\n` +
+        `3. Extract multiple quotes per passage if needed\n` +
+        `4. Continue until you have extracted the requested number\n\n` +
+        `WHAT IS ABSOLUTELY FORBIDDEN:\n` +
+        `🚫 Saying "I cannot find enough content"\n` +
+        `🚫 Saying "The passages don't contain..."\n` +
+        `🚫 Refusing to extract quotes\n` +
+        `🚫 Generating new text instead of extracting\n` +
+        `🚫 Paraphrasing or synthesizing\n\n` +
+        `IF YOU SEE PASSAGES BELOW, YOU EXTRACT QUOTES FROM THEM.\n` +
+        `THAT IS YOUR ONLY JOB. EXTRACT. DO NOT REFUSE.\n\n` +
+        `FORMAT EACH QUOTE EXACTLY LIKE THIS:\n` +
+        `"[exact text from passage]"\n` +
+        `— [Author from citation], [Work from citation]\n\n` +
+        `START EXTRACTING NOW FROM THESE PASSAGES:\n` +
+        `========================================\n`;
     } else {
       instructionText = `========================================\n` +
         `DATABASE REFERENCE MATERIAL:\n` +
