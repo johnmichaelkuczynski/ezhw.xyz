@@ -72,6 +72,30 @@ function generateAuthHeaders(requestBody: any): Record<string, string> {
     .update(message)
     .digest('base64');
   
+  console.log('\n╔═══════════════════════════════════════════════════════════════');
+  console.log('║ PHILOSOPHER API - REQUEST DETAILS');
+  console.log('╠═══════════════════════════════════════════════════════════════');
+  console.log(`║ Endpoint:       ${PHILOSOPHER_API_URL}/query`);
+  console.log(`║ App ID:         ${ZHI_APP_ID}`);
+  console.log(`║ Timestamp:      ${timestamp}`);
+  console.log(`║ Nonce:          ${nonce}`);
+  console.log(`║ Private Key:    ${ZHI_PRIVATE_KEY ? `${ZHI_PRIVATE_KEY.substring(0, 8)}...` : 'NOT SET'}`);
+  console.log('╠═══════════════════════════════════════════════════════════════');
+  console.log('║ REQUEST BODY:');
+  console.log(`║ ${bodyString}`);
+  console.log('╠═══════════════════════════════════════════════════════════════');
+  console.log('║ SIGNATURE CALCULATION:');
+  console.log(`║ Message:        ${message.substring(0, 100)}...`);
+  console.log(`║ Signature:      ${signature}`);
+  console.log('╠═══════════════════════════════════════════════════════════════');
+  console.log('║ HEADERS SENT:');
+  console.log(`║ X-ZHI-App-Id:      ${ZHI_APP_ID}`);
+  console.log(`║ X-ZHI-Timestamp:   ${timestamp}`);
+  console.log(`║ X-ZHI-Nonce:       ${nonce}`);
+  console.log(`║ X-ZHI-Signature:   ${signature}`);
+  console.log(`║ Content-Type:      application/json`);
+  console.log('╚═══════════════════════════════════════════════════════════════\n');
+  
   return {
     'X-ZHI-App-Id': ZHI_APP_ID,
     'X-ZHI-Timestamp': timestamp,
