@@ -101,17 +101,14 @@ export async function fetchPhilosopherContent(query: string, author?: string): P
   }
 
   try {
-    console.log(`[AP API] Sending query: "${query.substring(0, 100)}..." with author filter: ${author || 'none'}`);
+    console.log(`[AP API] Sending query: "${query.substring(0, 100)}..."`);
+    console.log(`[AP API] Strategy: Using semantic search only (no metadata filters)`);
     
     const requestBody: any = { 
       query,
       limit: 10,
       includeQuotes: true
     };
-    
-    if (author) {
-      requestBody.author = author;
-    }
     
     const authHeaders = generateAuthHeaders(requestBody);
     
