@@ -88,6 +88,7 @@ export const processAssignmentSchema = z.object({
   fileData: z.string().optional(), // base64 encoded file data
   sessionId: z.string().optional(), // for anonymous users
   referenceDocumentIds: z.array(z.number()).default([]), // for whole-document processing
+  forcePhilosopher: z.boolean().optional().default(false), // force philosopher API enrichment
 });
 
 export type ProcessAssignmentRequest = z.infer<typeof processAssignmentSchema>;

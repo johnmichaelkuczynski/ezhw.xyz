@@ -3342,7 +3342,7 @@ Just provide the final, polished, A+ quality assignment that a student could sub
   // Text processing endpoint with token management
   app.post("/api/process-text", async (req, res) => {
     try {
-      const { inputText, llmProvider, sessionId, referenceDocumentIds = [] } = processAssignmentSchema.parse(req.body);
+      const { inputText, llmProvider, sessionId, referenceDocumentIds = [], forcePhilosopher = false } = processAssignmentSchema.parse(req.body);
 
       if (!inputText) {
         return res.status(400).json({ error: "Input text is required" });
@@ -3376,8 +3376,11 @@ Just provide the final, polished, A+ quality assignment that a student could sub
         }
       }
       
-      // PHILOSOPHER API: Enrich with philosophical content if needed
-      combinedText = await enrichWithPhilosophicalContentIfNeeded(combinedText);
+      // PHILOSOPHER API: Enrich with philosophical content (forced or auto-detected)
+      if (forcePhilosopher) {
+        console.log('[PHILOSOPHER API] Force mode enabled - querying database');
+      }
+      combinedText = await enrichWithPhilosophicalContentIfNeeded(combinedText, forcePhilosopher);
       
       // Count tokens based on combined text (inputText + reference documents + philosophical enrichment)
       const inputTokens = countTokens(combinedText);

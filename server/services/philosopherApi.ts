@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const PHILOSOPHER_API_URL = 'https://analyticphilosophy.net/api';
+const PHILOSOPHER_API_URL = 'https://analyticphilosophy.net/zhi';
 const ZHI_PRIVATE_KEY = process.env.ZHI_PRIVATE_KEY;
 
 interface PhilosopherContent {
@@ -151,13 +151,20 @@ export function enrichTextWithPhilosophicalContent(
   return enrichedText;
 }
 
-export async function enrichWithPhilosophicalContentIfNeeded(text: string): Promise<string> {
-  if (!detectPhilosophicalContent(text)) {
+export async function enrichWithPhilosophicalContentIfNeeded(text: string, forceQuery: boolean = false): Promise<string> {
+  const hasPhilosophicalContent = detectPhilosophicalContent(text);
+  
+  if (!forceQuery && !hasPhilosophicalContent) {
     console.log('[PHILOSOPHER API] No philosophical content detected, skipping enrichment');
     return text;
   }
   
-  console.log('[PHILOSOPHER API] Philosophical content detected, fetching reference material...');
+  if (forceQuery) {
+    console.log('[PHILOSOPHER API] 🔥 FORCE MODE: Always querying philosopher database');
+  } else {
+    console.log('[PHILOSOPHER API] Philosophical content detected, fetching reference material...');
+  }
+  
   const topics = extractPhilosophicalTopics(text);
   console.log(`[PHILOSOPHER API] Detected topics: ${topics.join(', ')}`);
   

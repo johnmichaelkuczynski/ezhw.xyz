@@ -29,6 +29,7 @@ export default function HomeworkAssistant() {
   const [currentAssignmentName, setCurrentAssignmentName] = useState("");
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [selectedProvider, setSelectedProvider] = useState("openai");
+  const [usePhilosopherDB, setUsePhilosopherDB] = useState(false);
   const [currentResult, setCurrentResult] = useState<any>(null);
   const [wordCount, setWordCount] = useState(0);
   const [aiDetectionResult, setAiDetectionResult] = useState<any>(null);
@@ -858,7 +859,7 @@ export default function HomeworkAssistant() {
   };
 
   // Chunked processing function
-  const processInChunks = async (text: string, provider: string) => {
+  const processInChunks = async (text: string, provider: string, forcePhilosopher: boolean = false) => {
     const words = text.trim().split(/\s+/);
     
     // Check if we need chunking (more than 1000 words)
@@ -912,7 +913,8 @@ ${fullResponse.slice(-1000)}...`;
             inputText: chunkPrompt, 
             inputType: 'text',
             llmProvider: provider,
-            sessionId: sessionId
+            sessionId: sessionId,
+            forcePhilosopher: forcePhilosopher
           }),
         });
 
@@ -1000,7 +1002,7 @@ ${fullResponse.slice(-1000)}...`;
   });
 
   const textMutation = useMutation({
-    mutationFn: ({ text, provider }: { text: string; provider: string }) => {
+    mutationFn: ({ text, provider, forcePhilosopher }: { text: string; provider: string; forcePhilosopher?: boolean }) => {
       return fetch('/api/process-text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1008,7 +1010,8 @@ ${fullResponse.slice(-1000)}...`;
           inputText: text, 
           inputType: 'text',
           llmProvider: provider,
-          sessionId: sessionId
+          sessionId: sessionId,
+          forcePhilosopher: forcePhilosopher || false
         }),
       }).then(res => res.json());
     },
@@ -1095,9 +1098,13 @@ ${fullResponse.slice(-1000)}...`;
     // Check if we need chunked processing
     const words = textToProcess.trim().split(/\s+/);
     if (words.length > 1000) {
-      await processInChunks(textToProcess, selectedProvider);
+      await processInChunks(textToProcess, selectedProvider, usePhilosopherDB);
     } else {
-      textMutation.mutate({ text: textToProcess, provider: selectedProvider });
+      textMutation.mutate({ 
+        text: textToProcess, 
+        provider: selectedProvider,
+        forcePhilosopher: usePhilosopherDB 
+      });
     }
   };
 
@@ -1499,6 +1506,21 @@ ${fullResponse.slice(-1000)}...`;
                 <FileText className="w-4 h-4 mr-2" />
                 New Assignment
               </Button>
+              
+              {/* Philosopher Database Toggle */}
+              <Button
+                onClick={() => setUsePhilosopherDB(!usePhilosopherDB)}
+                variant={usePhilosopherDB ? "default" : "outline"}
+                className={usePhilosopherDB 
+                  ? "bg-purple-600 hover:bg-purple-700 text-white" 
+                  : "border-purple-300 text-purple-700 hover:bg-purple-50"
+                }
+                data-testid="toggle-philosopher-db"
+              >
+                <Lightbulb className="w-4 h-4 mr-2" />
+                {usePhilosopherDB ? "Philosopher DB: ON" : "Philosopher DB: OFF"}
+              </Button>
+              
               <Select value={selectedProvider} onValueChange={setSelectedProvider}>
                 <SelectTrigger className="w-48">
                   <SelectValue />
