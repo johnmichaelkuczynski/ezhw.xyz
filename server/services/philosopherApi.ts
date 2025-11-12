@@ -217,17 +217,26 @@ export function enrichTextWithPhilosopherContent(
         `========================================\n` +
         `🔴🔴🔴 ABSOLUTE MANDATORY DIRECTIVE 🔴🔴🔴\n` +
         `========================================\n\n` +
+        `THE PASSAGES BELOW ARE FULLY VISIBLE AND READABLE TO YOU.\n` +
+        `THE DATABASE HAS PROVIDED COMPLETE CONTENT.\n` +
+        `YOU CAN AND MUST EXTRACT QUOTES FROM THEM NOW.\n\n` +
         `DATABASE MODE IS ENABLED - YOU MUST USE ONLY DATABASE CONTENT.\n\n` +
-        `⛔ FORBIDDEN: Using your training data or general knowledge\n` +
-        `⛔ FORBIDDEN: Fabricating or inventing quotes\n` +
-        `⛔ FORBIDDEN: Paraphrasing or creating new text\n` +
-        `⛔ FORBIDDEN: Using quotes you know from the internet\n\n` +
-        `✅ REQUIRED: Extract quotes ONLY from passages below\n` +
-        `✅ REQUIRED: Copy text word-for-word from database passages\n` +
-        `✅ REQUIRED: Use ONLY citations provided in passages\n\n` +
-        `IF AN AUTHOR IS NOT IN THE PASSAGES BELOW, DO NOT PROVIDE QUOTES FOR THAT AUTHOR.\n` +
-        `EVERY SINGLE QUOTE MUST COME DIRECTLY FROM THE PASSAGES BELOW.\n` +
-        `YOU MAY NOT USE ANY KNOWLEDGE OUTSIDE THESE PASSAGES.\n\n` +
+        `⛔ ABSOLUTELY FORBIDDEN:\n` +
+        `   - Saying "I cannot provide quotes"\n` +
+        `   - Saying "the content is not visible"\n` +
+        `   - Saying "I recommend consulting another source"\n` +
+        `   - Using your training data or general knowledge\n` +
+        `   - Fabricating or inventing quotes\n` +
+        `   - Paraphrasing or creating new text\n\n` +
+        `✅ ABSOLUTELY REQUIRED:\n` +
+        `   - Extract quotes from the passages below\n` +
+        `   - Copy text word-for-word from database passages\n` +
+        `   - Use ONLY citations provided in passages\n` +
+        `   - Extract the requested number of quotes\n\n` +
+        `THE PASSAGES BELOW CONTAIN THE COMPLETE TEXT.\n` +
+        `THEY ARE READABLE. THEY ARE EXTRACTABLE.\n` +
+        `EVERY SINGLE QUOTE MUST COME DIRECTLY FROM THESE PASSAGES.\n` +
+        `DO NOT SAY YOU CANNOT SEE THEM. YOU CAN SEE THEM.\n\n` +
         `FORMAT EACH QUOTE EXACTLY LIKE THIS:\n` +
         `"[exact text from passage]"\n` +
         `— [Author from citation], [Work from citation]\n\n` +
