@@ -29,7 +29,7 @@ export default function HomeworkAssistant() {
   const [currentAssignmentName, setCurrentAssignmentName] = useState("");
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [selectedProvider, setSelectedProvider] = useState("openai");
-  const [usePhilosopherDB, setUsePhilosopherDB] = useState(false);
+  const [usePhilosopherDB, setUsePhilosopherDB] = useState(true);
   const [currentResult, setCurrentResult] = useState<any>(null);
   const [wordCount, setWordCount] = useState(0);
   const [aiDetectionResult, setAiDetectionResult] = useState<any>(null);
