@@ -102,13 +102,17 @@ export async function fetchPhilosopherContent(query: string, author?: string): P
 
   try {
     console.log(`[AP API] Sending query: "${query.substring(0, 100)}..."`);
-    console.log(`[AP API] Strategy: Using semantic search only (no metadata filters)`);
+    console.log(`[AP API] Author filter: ${author || 'none'}`);
     
     const requestBody: any = { 
       query,
       limit: 10,
       includeQuotes: true
     };
+    
+    if (author) {
+      requestBody.author = author;
+    }
     
     const authHeaders = generateAuthHeaders(requestBody);
     
@@ -124,12 +128,28 @@ export async function fetchPhilosopherContent(query: string, author?: string): P
     console.log('[AP API] ✓ Successfully retrieved content');
     console.log(`[AP API] Results: ${response.data.results.length} excerpts, ${response.data.quotes.length} quotes`);
     
-    const passages = response.data.results.map(r => 
+    let filteredResults = response.data.results;
+    
+    if (author) {
+      const authorLower = author.toLowerCase();
+      filteredResults = response.data.results.filter(r => {
+        const citationAuthor = r.citation.author.toLowerCase();
+        return citationAuthor.includes(authorLower) || authorLower.includes(citationAuthor);
+      });
+      
+      const filtered = response.data.results.length - filteredResults.length;
+      if (filtered > 0) {
+        console.warn(`[AP API] ⚠️  Filtered out ${filtered} results from wrong authors (requested: ${author})`);
+        console.warn(`[AP API] ⚠️  Database author filter is not working correctly - applying client-side filtering`);
+      }
+    }
+    
+    const passages = filteredResults.map(r => 
       `PASSAGE CONTENT:\n${r.excerpt}\n\nCITATION: ${r.citation.author}, "${r.citation.work}"\nRELEVANCE: ${r.relevance}`
     );
     
-    console.log(`[AP API] Sample excerpt: ${response.data.results[0]?.excerpt.substring(0, 200)}...`);
-    console.log(`[AP API] First citation: ${response.data.results[0]?.citation.author}`);
+    console.log(`[AP API] Sample excerpt: ${filteredResults[0]?.excerpt.substring(0, 200)}...`);
+    console.log(`[AP API] First citation: ${filteredResults[0]?.citation.author}`);
     
     const content: PhilosopherContent = {
       quotes: response.data.quotes.length > 0 ? response.data.quotes : undefined,
@@ -229,14 +249,39 @@ export function enrichTextWithPhilosopherContent(
 function extractAuthorFromQuery(text: string): string | undefined {
   const authorPatterns = [
     /(?:quotes?\s+(?:by|from)\s+)?(?:john-?michael\s+)?kuczynski/i,
-    /(?:quotes?\s+(?:by|from)\s+)?plato/i,
-    /(?:quotes?\s+(?:by|from)\s+)?freud/i,
-    /(?:quotes?\s+(?:by|from)\s+)?nietzsche/i,
-    /(?:quotes?\s+(?:by|from)\s+)?kant/i,
-    /(?:quotes?\s+(?:by|from)\s+)?hume/i,
-    /(?:quotes?\s+(?:by|from)\s+)?descartes/i,
-    /(?:quotes?\s+(?:by|from)\s+)?aristotle/i,
     /(?:quotes?\s+(?:by|from)\s+)?russell/i,
+    /(?:quotes?\s+(?:by|from)\s+)?galileo/i,
+    /(?:quotes?\s+(?:by|from)\s+)?nietzsche/i,
+    /(?:quotes?\s+(?:by|from)\s+)?freud/i,
+    /(?:quotes?\s+(?:by|from)\s+)?(?:william\s+)?james/i,
+    /(?:quotes?\s+(?:by|from)\s+)?leibniz/i,
+    /(?:quotes?\s+(?:by|from)\s+)?aristotle/i,
+    /(?:quotes?\s+(?:by|from)\s+)?le\s+bon/i,
+    /(?:quotes?\s+(?:by|from)\s+)?plato/i,
+    /(?:quotes?\s+(?:by|from)\s+)?darwin/i,
+    /(?:quotes?\s+(?:by|from)\s+)?kant/i,
+    /(?:quotes?\s+(?:by|from)\s+)?schopenhauer/i,
+    /(?:quotes?\s+(?:by|from)\s+)?jung/i,
+    /(?:quotes?\s+(?:by|from)\s+)?(?:edgar\s+allan\s+)?poe/i,
+    /(?:quotes?\s+(?:by|from)\s+)?(?:karl\s+)?marx/i,
+    /(?:quotes?\s+(?:by|from)\s+)?keynes/i,
+    /(?:quotes?\s+(?:by|from)\s+)?(?:john\s+)?locke/i,
+    /(?:quotes?\s+(?:by|from)\s+)?newton/i,
+    /(?:quotes?\s+(?:by|from)\s+)?hume/i,
+    /(?:quotes?\s+(?:by|from)\s+)?machiavelli/i,
+    /(?:quotes?\s+(?:by|from)\s+)?bierce/i,
+    /(?:quotes?\s+(?:by|from)\s+)?poincare/i,
+    /(?:quotes?\s+(?:by|from)\s+)?bergson/i,
+    /(?:quotes?\s+(?:by|from)\s+)?(?:jack\s+)?london/i,
+    /(?:quotes?\s+(?:by|from)\s+)?adler/i,
+    /(?:quotes?\s+(?:by|from)\s+)?engels/i,
+    /(?:quotes?\s+(?:by|from)\s+)?rousseau/i,
+    /(?:quotes?\s+(?:by|from)\s+)?(?:von\s+)?mises/i,
+    /(?:quotes?\s+(?:by|from)\s+)?veblen/i,
+    /(?:quotes?\s+(?:by|from)\s+)?swett/i,
+    /(?:quotes?\s+(?:by|from)\s+)?berkeley/i,
+    /(?:quotes?\s+(?:by|from)\s+)?maimonides/i,
+    /(?:quotes?\s+(?:by|from)\s+)?descartes/i,
     /(?:quotes?\s+(?:by|from)\s+)?wittgenstein/i,
   ];
   
