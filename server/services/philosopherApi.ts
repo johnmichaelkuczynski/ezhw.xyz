@@ -321,8 +321,8 @@ export async function enrichWithPhilosophicalContentIfNeeded(text: string, force
   if (authors.length === 0) {
     const content = await fetchPhilosopherContent(text, undefined);
     if (!content) {
-      console.warn('[AP API] ⚠️  Database query failed - falling back to LLM-only mode');
-      return text;
+      console.error('[AP API] ⛔ KILL SWITCH ACTIVATED - Database query failed');
+      throw new Error('KILL SWITCH: AP database query failed. Cannot proceed without authentic database content. Toggle must be OFF to process this request.');
     }
     return enrichTextWithPhilosopherContent(text, content);
   }
@@ -336,8 +336,8 @@ export async function enrichWithPhilosophicalContentIfNeeded(text: string, force
     const content = await fetchPhilosopherContent(text, author);
     
     if (!content) {
-      console.warn(`[AP API] ⚠️  Database query failed for ${author} - falling back to LLM-only mode`);
-      return text;
+      console.error(`[AP API] ⛔ KILL SWITCH: No content for ${author}`);
+      throw new Error(`KILL SWITCH: AP database query failed for ${author}. Cannot proceed without authentic database content. Toggle must be OFF to process this request.`);
     }
     
     if (content.quotes) {
