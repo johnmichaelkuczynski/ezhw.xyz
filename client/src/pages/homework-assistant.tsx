@@ -955,15 +955,20 @@ ${fullResponse.slice(-1000)}...`;
   };
 
   const uploadMutation = useMutation({
-    mutationFn: ({ file, provider }: { file: File; provider: string }) => {
+    mutationFn: async ({ file, provider }: { file: File; provider: string }) => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('llmProvider', provider);
       formData.append('sessionId', sessionId);
-      return fetch('/api/upload', {
+      const res = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
-      }).then(res => res.json());
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to upload file');
+      }
+      return data;
     },
     onSuccess: (data) => {
       setCurrentResult(data);
@@ -1002,8 +1007,8 @@ ${fullResponse.slice(-1000)}...`;
   });
 
   const textMutation = useMutation({
-    mutationFn: ({ text, provider, forcePhilosopher }: { text: string; provider: string; forcePhilosopher?: boolean }) => {
-      return fetch('/api/process-text', {
+    mutationFn: async ({ text, provider, forcePhilosopher }: { text: string; provider: string; forcePhilosopher?: boolean }) => {
+      const res = await fetch('/api/process-text', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -1013,11 +1018,16 @@ ${fullResponse.slice(-1000)}...`;
           sessionId: sessionId,
           forcePhilosopher: forcePhilosopher || false
         }),
-      }).then(res => res.json());
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to process text');
+      }
+      return data;
     },
     onSuccess: (data) => {
       // Clean markdown from the response
-      const cleanedResponse = cleanMarkdown(data.llmResponse);
+      const cleanedResponse = data.llmResponse ? cleanMarkdown(data.llmResponse) : '';
       const cleanedData = { ...data, llmResponse: cleanedResponse };
       
       setCurrentResult(cleanedData);
