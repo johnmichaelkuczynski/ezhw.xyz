@@ -57,19 +57,32 @@ The application employs a client-server architecture.
 
 ## Recent Changes
 
+### November 12, 2025 - Critical KILL SWITCH Fix & Client-Side Validation
+- **KILL SWITCH Enhancement:** System now correctly refuses to fabricate quotes when database returns zero authentic content
+  - If client-side filtering removes ALL results (database author filter broken), KILL SWITCH activates immediately
+  - Error message: "KILL SWITCH: AP database query failed. Cannot proceed without authentic database content."
+  - Prevents LLMs from generating fake quotes when toggle is ON and database fails to deliver
+- **Client-Side Validation:** Added post-fetch filtering to compensate for broken upstream author filtering
+  - AP database's `author` parameter is non-functional (returns wrong authors 20-100% of the time)
+  - EZHW now filters results client-side to ensure citation accuracy
+  - Detailed warnings logged when filtering removes incorrect results
+- **Expanded Author Detection:** Now detects all 33+ philosophers from user's list
+  - Kuczynski, Russell, Galileo, Nietzsche, Freud, James, Leibniz, Aristotle, Le Bon, Plato
+  - Darwin, Kant, Schopenhauer, Jung, Poe, Marx, Keynes, Locke, Newton, Hume
+  - Machiavelli, Bierce, Poincare, Bergson, Jack London, Adler, Engels, Rousseau
+  - Von Mises, Veblen, Swett, Berkeley, Maimonides, Descartes, Wittgenstein
+
 ### November 11, 2025 - Ask-a-Philosopher API Integration
 - Created `server/services/philosopherApi.ts` for AP database integration
 - **HMAC-SHA256 Authentication Implementation:**
   - X-ZHI-App-Id: "ezhw"
-  - X-ZHI-Timestamp: Unix seconds (Math.floor(Date.now() / 1000))
+  - X-ZHI-Timestamp: Unix milliseconds
   - X-ZHI-Nonce: Random 32-char hex string
-  - X-ZHI-Signature: Base64 HMAC-SHA256 of "appId:timestamp:nonce:body"
+  - X-ZHI-Signature: Base64 HMAC-SHA256 of POST method, path, timestamp, nonce, and body hash
   - Uses ZHI_PRIVATE_KEY environment variable
-- **Toggle Behavior:** When "Philosopher DB: ON", system automatically queries AP database for ANY request
-- **No Keyword Detection:** Removed all client-side filtering - AP server decides what content to return
+- **Toggle Behavior:** When "Philosopher DB: ON", system queries AP database with author filtering
 - API endpoint: https://analyticphilosophy.net/zhi/query
-- Request format: `{ "query": "user's text" }` (no preprocessing or parameterization)
+- Request format: `{ "query": "user's text", "author": "detected_author", "limit": 10, "includeQuotes": true }`
 - Response enriches LLM prompt with quotes, passages, context, and sources from 50,000+ page database
 - Detailed logging shows exact request details (endpoint, headers, signature calculation) for debugging
 - Works for both short assignments and chunked processing (1000+ words)
-- Full Zod schema validation for request integrity in all processing flows

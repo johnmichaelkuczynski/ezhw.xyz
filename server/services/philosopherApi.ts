@@ -142,6 +142,13 @@ export async function fetchPhilosopherContent(query: string, author?: string): P
         console.warn(`[AP API] ⚠️  Filtered out ${filtered} results from wrong authors (requested: ${author})`);
         console.warn(`[AP API] ⚠️  Database author filter is not working correctly - applying client-side filtering`);
       }
+      
+      if (filteredResults.length === 0) {
+        console.error(`[AP API] ⛔ CRITICAL: Database returned ZERO ${author} content after filtering`);
+        console.error(`[AP API] ⛔ All ${response.data.results.length} results were from wrong authors`);
+        console.error(`[AP API] ⛔ KILL SWITCH: Refusing to proceed without authentic database content`);
+        return null;
+      }
     }
     
     const passages = filteredResults.map(r => 
