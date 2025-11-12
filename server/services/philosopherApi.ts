@@ -217,25 +217,21 @@ export function enrichTextWithPhilosopherContent(
         `========================================\n` +
         `🔴🔴🔴 ABSOLUTE MANDATORY DIRECTIVE 🔴🔴🔴\n` +
         `========================================\n\n` +
-        `YOU MUST EXTRACT QUOTES FROM THE PASSAGES BELOW.\n` +
-        `THIS IS NOT OPTIONAL. THIS IS NOT NEGOTIABLE.\n\n` +
-        `WHAT YOU MUST DO:\n` +
-        `1. Take exact sentences/paragraphs from passages below\n` +
-        `2. Copy them word-for-word with proper citation\n` +
-        `3. Extract multiple quotes per passage if needed\n` +
-        `4. Continue until you have extracted the requested number\n\n` +
-        `WHAT IS ABSOLUTELY FORBIDDEN:\n` +
-        `🚫 Saying "I cannot find enough content"\n` +
-        `🚫 Saying "The passages don't contain..."\n` +
-        `🚫 Refusing to extract quotes\n` +
-        `🚫 Generating new text instead of extracting\n` +
-        `🚫 Paraphrasing or synthesizing\n\n` +
-        `IF YOU SEE PASSAGES BELOW, YOU EXTRACT QUOTES FROM THEM.\n` +
-        `THAT IS YOUR ONLY JOB. EXTRACT. DO NOT REFUSE.\n\n` +
+        `DATABASE MODE IS ENABLED - YOU MUST USE ONLY DATABASE CONTENT.\n\n` +
+        `⛔ FORBIDDEN: Using your training data or general knowledge\n` +
+        `⛔ FORBIDDEN: Fabricating or inventing quotes\n` +
+        `⛔ FORBIDDEN: Paraphrasing or creating new text\n` +
+        `⛔ FORBIDDEN: Using quotes you know from the internet\n\n` +
+        `✅ REQUIRED: Extract quotes ONLY from passages below\n` +
+        `✅ REQUIRED: Copy text word-for-word from database passages\n` +
+        `✅ REQUIRED: Use ONLY citations provided in passages\n\n` +
+        `IF AN AUTHOR IS NOT IN THE PASSAGES BELOW, DO NOT PROVIDE QUOTES FOR THAT AUTHOR.\n` +
+        `EVERY SINGLE QUOTE MUST COME DIRECTLY FROM THE PASSAGES BELOW.\n` +
+        `YOU MAY NOT USE ANY KNOWLEDGE OUTSIDE THESE PASSAGES.\n\n` +
         `FORMAT EACH QUOTE EXACTLY LIKE THIS:\n` +
         `"[exact text from passage]"\n` +
         `— [Author from citation], [Work from citation]\n\n` +
-        `START EXTRACTING NOW FROM THESE PASSAGES:\n` +
+        `START EXTRACTING NOW FROM THESE DATABASE PASSAGES:\n` +
         `========================================\n`;
     } else {
       instructionText = `========================================\n` +
@@ -253,56 +249,54 @@ export function enrichTextWithPhilosopherContent(
   return originalText;
 }
 
-function extractAuthorFromQuery(text: string): string | undefined {
-  const authorPatterns = [
-    /(?:quotes?\s+(?:by|from)\s+)?(?:john-?michael\s+)?kuczynski/i,
-    /(?:quotes?\s+(?:by|from)\s+)?russell/i,
-    /(?:quotes?\s+(?:by|from)\s+)?galileo/i,
-    /(?:quotes?\s+(?:by|from)\s+)?nietzsche/i,
-    /(?:quotes?\s+(?:by|from)\s+)?freud/i,
-    /(?:quotes?\s+(?:by|from)\s+)?(?:william\s+)?james/i,
-    /(?:quotes?\s+(?:by|from)\s+)?leibniz/i,
-    /(?:quotes?\s+(?:by|from)\s+)?aristotle/i,
-    /(?:quotes?\s+(?:by|from)\s+)?le\s+bon/i,
-    /(?:quotes?\s+(?:by|from)\s+)?plato/i,
-    /(?:quotes?\s+(?:by|from)\s+)?darwin/i,
-    /(?:quotes?\s+(?:by|from)\s+)?kant/i,
-    /(?:quotes?\s+(?:by|from)\s+)?schopenhauer/i,
-    /(?:quotes?\s+(?:by|from)\s+)?jung/i,
-    /(?:quotes?\s+(?:by|from)\s+)?(?:edgar\s+allan\s+)?poe/i,
-    /(?:quotes?\s+(?:by|from)\s+)?(?:karl\s+)?marx/i,
-    /(?:quotes?\s+(?:by|from)\s+)?keynes/i,
-    /(?:quotes?\s+(?:by|from)\s+)?(?:john\s+)?locke/i,
-    /(?:quotes?\s+(?:by|from)\s+)?newton/i,
-    /(?:quotes?\s+(?:by|from)\s+)?hume/i,
-    /(?:quotes?\s+(?:by|from)\s+)?machiavelli/i,
-    /(?:quotes?\s+(?:by|from)\s+)?bierce/i,
-    /(?:quotes?\s+(?:by|from)\s+)?poincare/i,
-    /(?:quotes?\s+(?:by|from)\s+)?bergson/i,
-    /(?:quotes?\s+(?:by|from)\s+)?(?:jack\s+)?london/i,
-    /(?:quotes?\s+(?:by|from)\s+)?adler/i,
-    /(?:quotes?\s+(?:by|from)\s+)?engels/i,
-    /(?:quotes?\s+(?:by|from)\s+)?rousseau/i,
-    /(?:quotes?\s+(?:by|from)\s+)?(?:von\s+)?mises/i,
-    /(?:quotes?\s+(?:by|from)\s+)?veblen/i,
-    /(?:quotes?\s+(?:by|from)\s+)?swett/i,
-    /(?:quotes?\s+(?:by|from)\s+)?berkeley/i,
-    /(?:quotes?\s+(?:by|from)\s+)?maimonides/i,
-    /(?:quotes?\s+(?:by|from)\s+)?descartes/i,
-    /(?:quotes?\s+(?:by|from)\s+)?wittgenstein/i,
-  ];
+function extractAllAuthorsFromQuery(text: string): string[] {
+  const authorPatterns: { [key: string]: RegExp } = {
+    'kuczynski': /(?:john-?michael\s+)?kuczynski/i,
+    'russell': /\brussell\b/i,
+    'galileo': /\bgalileo\b/i,
+    'nietzsche': /\bnietzsche\b/i,
+    'freud': /\bfreud\b/i,
+    'james': /(?:william\s+)?james/i,
+    'leibniz': /\bleibniz\b/i,
+    'aristotle': /\baristotle\b/i,
+    'le bon': /le\s+bon/i,
+    'plato': /\bplato\b/i,
+    'darwin': /\bdarwin\b/i,
+    'kant': /\bkant\b/i,
+    'schopenhauer': /\bschopenhauer\b/i,
+    'jung': /\bjung\b/i,
+    'poe': /(?:edgar\s+allan\s+)?poe/i,
+    'marx': /\bmarx\b/i,
+    'keynes': /\bkeynes\b/i,
+    'locke': /\blocke\b/i,
+    'newton': /\bnewton\b/i,
+    'hume': /\bhume\b/i,
+    'machiavelli': /\bmachiavelli\b/i,
+    'bierce': /\bbierce\b/i,
+    'poincare': /\bpoincare\b/i,
+    'bergson': /\bbergson\b/i,
+    'london': /jack\s+london/i,
+    'adler': /\badler\b/i,
+    'engels': /\bengels\b/i,
+    'rousseau': /\brousseau\b/i,
+    'mises': /(?:von\s+)?mises/i,
+    'veblen': /\bveblen\b/i,
+    'swett': /\bswett\b/i,
+    'berkeley': /\bberkeley\b/i,
+    'maimonides': /\bmaimonides\b/i,
+    'descartes': /\bdescartes\b/i,
+    'wittgenstein': /\bwittgenstein\b/i,
+  };
   
-  for (const pattern of authorPatterns) {
+  const detectedAuthors: string[] = [];
+  
+  for (const [author, pattern] of Object.entries(authorPatterns)) {
     if (pattern.test(text)) {
-      const match = text.match(pattern);
-      if (match) {
-        let author = match[0].replace(/(?:quotes?\s+(?:by|from)\s+)/i, '').trim();
-        return author.toLowerCase();
-      }
+      detectedAuthors.push(author);
     }
   }
   
-  return undefined;
+  return detectedAuthors;
 }
 
 export async function enrichWithPhilosophicalContentIfNeeded(text: string, forceQuery: boolean = false): Promise<string> {
@@ -312,15 +306,45 @@ export async function enrichWithPhilosophicalContentIfNeeded(text: string, force
   
   console.log('[AP API] Toggle ON - querying database');
   
-  const author = extractAuthorFromQuery(text);
-  console.log(`[AP API] Detected author filter: ${author || 'none'}`);
+  const authors = extractAllAuthorsFromQuery(text);
+  console.log(`[AP API] Detected ${authors.length} author(s): ${authors.join(', ') || 'none'}`);
   
-  const content = await fetchPhilosopherContent(text, author);
-  
-  if (!content) {
-    console.error('[AP API] ⛔ KILL SWITCH ACTIVATED - Database query failed, refusing to generate fabricated content');
-    throw new Error('KILL SWITCH: AP database query failed. Cannot proceed without authentic database content. Toggle must be OFF to process this request.');
+  if (authors.length === 0) {
+    const content = await fetchPhilosopherContent(text, undefined);
+    if (!content) {
+      console.error('[AP API] ⛔ KILL SWITCH ACTIVATED - Database query failed');
+      throw new Error('KILL SWITCH: AP database query failed. Cannot proceed without authentic database content. Toggle must be OFF to process this request.');
+    }
+    return enrichTextWithPhilosopherContent(text, content);
   }
   
-  return enrichTextWithPhilosopherContent(text, content);
+  const allQuotes: string[] = [];
+  const allPassages: string[] = [];
+  let combinedSource = 'Ask-a-Philosopher Database (50,000+ pages)';
+  
+  for (const author of authors) {
+    console.log(`[AP API] Querying database for: ${author}`);
+    const content = await fetchPhilosopherContent(text, author);
+    
+    if (!content) {
+      console.error(`[AP API] ⛔ KILL SWITCH: No content for ${author}`);
+      throw new Error(`KILL SWITCH: AP database query failed for ${author}. Cannot proceed without authentic database content. Toggle must be OFF to process this request.`);
+    }
+    
+    if (content.quotes) {
+      allQuotes.push(...content.quotes);
+    }
+    if (content.passages) {
+      allPassages.push(...content.passages);
+    }
+  }
+  
+  const combinedContent: PhilosopherContent = {
+    quotes: allQuotes.length > 0 ? allQuotes : undefined,
+    passages: allPassages.length > 0 ? allPassages : undefined,
+    context: `Database queried for ${authors.length} author(s): ${authors.join(', ')}\nTotal content retrieved from ${authors.length} separate queries.`,
+    source: combinedSource
+  };
+  
+  return enrichTextWithPhilosopherContent(text, combinedContent);
 }
