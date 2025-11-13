@@ -151,18 +151,30 @@ export async function fetchPhilosopherContent(query: string, author?: string): P
       }
     }
     
-    const passages = filteredResults.map(r => 
-      `PASSAGE CONTENT:\n${r.excerpt}\n\nCITATION: ${r.citation.author}, "${r.citation.work}"\nRELEVANCE: ${r.relevance}`
-    );
+    const MAX_PASSAGE_LENGTH = 1000;
+    const MAX_PASSAGES_PER_AUTHOR = 5;
+    
+    const limitedResults = filteredResults.slice(0, MAX_PASSAGES_PER_AUTHOR);
+    
+    const passages = limitedResults.map(r => {
+      const truncatedExcerpt = r.excerpt.length > MAX_PASSAGE_LENGTH 
+        ? r.excerpt.substring(0, MAX_PASSAGE_LENGTH) + '...[truncated]'
+        : r.excerpt;
+      return `PASSAGE CONTENT:\n${truncatedExcerpt}\n\nCITATION: ${r.citation.author}, "${r.citation.work}"\nRELEVANCE: ${r.relevance}`;
+    });
+    
+    const MAX_QUOTES = 20;
+    const limitedQuotes = response.data.quotes.slice(0, MAX_QUOTES);
     
     console.log(`[AP API] Sample excerpt: ${filteredResults[0]?.excerpt.substring(0, 200)}...`);
     console.log(`[AP API] First citation: ${filteredResults[0]?.citation.author}`);
+    console.log(`[AP API] Limiting to ${limitedResults.length} passages (${MAX_PASSAGES_PER_AUTHOR} max) and ${limitedQuotes.length} quotes (${MAX_QUOTES} max)`);
     
     const content: PhilosopherContent = {
-      quotes: response.data.quotes.length > 0 ? response.data.quotes : undefined,
+      quotes: limitedQuotes.length > 0 ? limitedQuotes : undefined,
       passages: passages.length > 0 ? passages : undefined,
       context: response.data.meta.queryProcessed 
-        ? `Database query: "${response.data.meta.queryProcessed}"\nReturned ${response.data.meta.resultsReturned} results.\n\nNOTE: These passages contain the exact text from the database. Extract quotes word-for-word.`
+        ? `Database query: "${response.data.meta.queryProcessed}"\nReturned ${response.data.meta.resultsReturned} results (showing first ${limitedResults.length} passages, ${limitedQuotes.length} quotes).\n\nNOTE: These passages contain the exact text from the database. Extract quotes word-for-word.`
         : undefined,
       source: 'Ask-a-Philosopher Database (50,000+ pages)'
     };

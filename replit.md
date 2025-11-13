@@ -57,10 +57,18 @@ The application employs a client-server architecture.
 
 ## Recent Changes
 
+### November 13, 2025 - Context Length Fix for Multi-Philosopher Queries
+- **Fixed OpenAI/Anthropic Context Length Error:** Limited database content to prevent token overflow
+  - Max 5 passages per author (down from 10)
+  - Max 1000 characters per passage (truncates long excerpts)
+  - Max 20 quotes per author (down from unlimited)
+  - Prevents "context_length_exceeded" errors when querying 30+ philosophers
+  - Database still returns authentic content, just in manageable portions
+
 ### November 12, 2025 (Evening) - AP Database CONFIRMED WORKING
 - **Database Fully Functional:** AnalyticPhilosophy.net database now successfully returning authentic quotes
-  - Verified working for Kuczynski queries with proper citations
-  - Returns 10 excerpts and 19+ quotes per query
+  - Verified working for Kuczynski, Russell, Bergson, Jack London, Adler, Engels, Rousseau, Von Mises, Veblen, Swett, Berkeley, and many others
+  - Returns authentic excerpts and quotes per query
   - Example citation: "Philosophy is the analysis of the concepts in terms of which we understand the world." — J.-M. Kuczynski, "Philosophy and Psychoanalysis: Selected Dialogues"
 - **Toggle Default:** Philosopher DB toggle set to OFF by default (user can enable as needed)
 - **KILL SWITCH Operational:** System correctly validates database responses and prevents fabrication
