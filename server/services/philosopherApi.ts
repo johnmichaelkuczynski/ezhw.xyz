@@ -151,16 +151,16 @@ export async function fetchPhilosopherContent(query: string, author?: string): P
       }
     }
     
-    const MAX_PASSAGE_LENGTH = 1000;
-    const MAX_PASSAGES_PER_AUTHOR = 5;
+    const MAX_PASSAGE_LENGTH = 800;
+    const MAX_PASSAGES_PER_AUTHOR = 3;
     
     const limitedResults = filteredResults.slice(0, MAX_PASSAGES_PER_AUTHOR);
     
     const passages = limitedResults.map(r => {
       const truncatedExcerpt = r.excerpt.length > MAX_PASSAGE_LENGTH 
-        ? r.excerpt.substring(0, MAX_PASSAGE_LENGTH) + '...[truncated]'
+        ? r.excerpt.substring(0, MAX_PASSAGE_LENGTH) + '...'
         : r.excerpt;
-      return `PASSAGE CONTENT:\n${truncatedExcerpt}\n\nCITATION: ${r.citation.author}, "${r.citation.work}"\nRELEVANCE: ${r.relevance}`;
+      return `PASSAGE:\n${truncatedExcerpt}\n\nSOURCE: ${r.citation.author}, "${r.citation.work}"`;
     });
     
     const MAX_QUOTES = 20;
@@ -204,7 +204,8 @@ export function enrichTextWithPhilosopherContent(
   const enrichmentSections: string[] = [];
   
   if (philosopherContent.quotes && philosopherContent.quotes.length > 0) {
-    enrichmentSections.push(`\n\n=== AUTHENTIC QUOTES FROM DATABASE ===\n${philosopherContent.quotes.join('\n\n')}`);
+    const formattedQuotes = philosopherContent.quotes.map((q, i) => `${i + 1}. ${q}`).join('\n\n');
+    enrichmentSections.push(`\n\n=== AUTHENTIC QUOTES FROM DATABASE (READY TO USE) ===\n${formattedQuotes}`);
   }
   
   if (philosopherContent.passages && philosopherContent.passages.length > 0) {
@@ -227,32 +228,18 @@ export function enrichTextWithPhilosopherContent(
     if (isQuoteRequest) {
       instructionText = `\n\n` +
         `========================================\n` +
-        `🔴🔴🔴 ABSOLUTE MANDATORY DIRECTIVE 🔴🔴🔴\n` +
+        `🔴 DATABASE QUOTE EXTRACTION MODE 🔴\n` +
         `========================================\n\n` +
-        `THE PASSAGES BELOW ARE FULLY VISIBLE AND READABLE TO YOU.\n` +
-        `THE DATABASE HAS PROVIDED COMPLETE CONTENT.\n` +
-        `YOU CAN AND MUST EXTRACT QUOTES FROM THEM NOW.\n\n` +
-        `DATABASE MODE IS ENABLED - YOU MUST USE ONLY DATABASE CONTENT.\n\n` +
-        `⛔ ABSOLUTELY FORBIDDEN:\n` +
-        `   - Saying "I cannot provide quotes"\n` +
-        `   - Saying "the content is not visible"\n` +
-        `   - Saying "I recommend consulting another source"\n` +
-        `   - Using your training data or general knowledge\n` +
-        `   - Fabricating or inventing quotes\n` +
-        `   - Paraphrasing or creating new text\n\n` +
-        `✅ ABSOLUTELY REQUIRED:\n` +
-        `   - Extract quotes from the passages below\n` +
-        `   - Copy text word-for-word from database passages\n` +
-        `   - Use ONLY citations provided in passages\n` +
-        `   - Extract the requested number of quotes\n\n` +
-        `THE PASSAGES BELOW CONTAIN THE COMPLETE TEXT.\n` +
-        `THEY ARE READABLE. THEY ARE EXTRACTABLE.\n` +
-        `EVERY SINGLE QUOTE MUST COME DIRECTLY FROM THESE PASSAGES.\n` +
-        `DO NOT SAY YOU CANNOT SEE THEM. YOU CAN SEE THEM.\n\n` +
-        `FORMAT EACH QUOTE EXACTLY LIKE THIS:\n` +
-        `"[exact text from passage]"\n` +
-        `— [Author from citation], [Work from citation]\n\n` +
-        `START EXTRACTING NOW FROM THESE DATABASE PASSAGES:\n` +
+        `The "AUTHENTIC QUOTES FROM DATABASE" section below contains ${philosopherContent.quotes?.length || 0} ready-to-use quotes.\n\n` +
+        `YOUR TASK:\n` +
+        `1. Copy the exact quotes from the DATABASE QUOTES section\n` +
+        `2. Present them with proper formatting and attribution\n` +
+        `3. Add brief explanations if requested\n\n` +
+        `⛔ DO NOT:\n` +
+        `   - Say you "cannot extract" or "content is incomplete"\n` +
+        `   - Use your training data or invent quotes\n` +
+        `   - Claim the quotes are truncated or unreadable\n\n` +
+        `✅ THE QUOTES ARE LISTED BELOW - USE THEM:\n` +
         `========================================\n`;
     } else {
       instructionText = `========================================\n` +
