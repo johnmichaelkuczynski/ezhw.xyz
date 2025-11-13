@@ -169,6 +169,7 @@ export async function fetchPhilosopherContent(query: string, author?: string): P
     console.log(`[AP API] Sample excerpt: ${filteredResults[0]?.excerpt.substring(0, 200)}...`);
     console.log(`[AP API] First citation: ${filteredResults[0]?.citation.author}`);
     console.log(`[AP API] Limiting to ${limitedResults.length} passages (${MAX_PASSAGES_PER_AUTHOR} max) and ${limitedQuotes.length} quotes (${MAX_QUOTES} max)`);
+    console.log(`[AP API] ⚠️ RAW QUOTE DATA:`, JSON.stringify(limitedQuotes.slice(0, 2), null, 2));
     
     const content: PhilosopherContent = {
       quotes: limitedQuotes.length > 0 ? limitedQuotes : undefined,
